@@ -58,7 +58,7 @@ Je rédigerais des cas d’utilisation pour décrire les principaux scénarios d
 
 Ces cas d’utilisation aideraient à clarifier le comportement attendu du système.
 
-3. Diagramme UML
+Diagramme UML
 
 Je proposerais un diagramme UML (principalement un diagramme de classes) pour représenter :
 
