@@ -75,3 +75,6 @@ Je fournirais également un schéma montrant l’enchaînement des différentes 
 -par exemple, comment on passerait de la page d’accueil à la liste des événements, puis au détail, puis à l’inscription, etc.
 
 Ce schéma permettrait de visualiser le parcours utilisateur dans l’application.
+
+
+Lien Figma : https://www.figma.com/board/klwByDzj3Pnpgu46vEm3W0/Symfony_GeekEvents?node-id=0-1&t=brBqlIJk4ItzbEBf-1
