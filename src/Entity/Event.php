@@ -41,9 +41,22 @@ class Event
     #[ORM\OneToMany(targetEntity: Activity::class, mappedBy: 'event', orphanRemoval: true)]
     private Collection $activities;
 
+    #[ORM\Column(length: 255)]
+    private ?string $category = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $location = null;
+
+    /**
+     * @var Collection<int, User>
+     */
+    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'eventsParticipating')]
+    private Collection $participants;
+
     public function __construct()
     {
         $this->activities = new ArrayCollection();
+        $this->participants = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -149,6 +162,54 @@ class Event
                 $activity->setEvent(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCategory(): ?string
+    {
+        return $this->category;
+    }
+
+    public function setCategory(string $category): static
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    public function getLocation(): ?string
+    {
+        return $this->location;
+    }
+
+    public function setLocation(string $location): static
+    {
+        $this->location = $location;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getParticipants(): Collection
+    {
+        return $this->participants;
+    }
+
+    public function addParticipant(User $participant): static
+    {
+        if (!$this->participants->contains($participant)) {
+            $this->participants->add($participant);
+        }
+
+        return $this;
+    }
+
+    public function removeParticipant(User $participant): static
+    {
+        $this->participants->removeElement($participant);
 
         return $this;
     }

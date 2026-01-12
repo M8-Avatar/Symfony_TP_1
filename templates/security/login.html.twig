@@ -1,0 +1,54 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion - GeekEvents{% endblock %}
+
+{% block body %}
+<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background p-4">
+    <div class="w-full max-w-md space-y-6">
+        
+        <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-8 border-primary/20">
+            <div class="flex flex-col space-y-1.5 text-center mb-6">
+                <h1 class="text-2xl font-bold tracking-tight">Connexion</h1>
+                <p class="text-sm text-muted-foreground">Entrez vos identifiants pour accéder à votre espace.</p>
+            </div>
+
+            <form method="post">
+                {% if error %}
+                    <div class="mb-4 p-3 rounded bg-red-900/30 border border-red-500/50 text-red-200 text-sm">
+                        {{ error.messageKey|trans(error.messageData, 'security') }}
+                    </div>
+                {% endif %}
+
+                {% if app.user %}
+                    <div class="mb-4 text-sm text-muted-foreground">
+                        Vous êtes connecté en tant que {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}" class="text-primary hover:underline">Se déconnecter</a>
+                    </div>
+                {% endif %}
+
+                <div class="space-y-4">
+                    <div class="space-y-2">
+                        <label for="inputEmail" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
+                        <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="email@exemple.com" autocomplete="email" required autofocus>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="inputPassword" class="text-sm font-medium leading-none">Mot de passe</label>
+                        <input type="password" name="password" id="inputPassword" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" autocomplete="current-password" required>
+                    </div>
+
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full">
+                        Se connecter
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-4 text-center text-sm">
+                Pas encore de compte ? 
+                <a href="{{ path('app_register') }}" class="text-primary hover:underline font-medium">S'inscrire</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

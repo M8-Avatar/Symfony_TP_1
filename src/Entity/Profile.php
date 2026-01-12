@@ -26,6 +26,9 @@ class Profile
     #[ORM\OneToOne(mappedBy: 'profile', cascade: ['persist', 'remove'])]
     private ?User $user = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $favoriteUniverse = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -80,6 +83,18 @@ class Profile
         }
 
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getFavoriteUniverse(): ?string
+    {
+        return $this->favoriteUniverse;
+    }
+
+    public function setFavoriteUniverse(?string $favoriteUniverse): static
+    {
+        $this->favoriteUniverse = $favoriteUniverse;
 
         return $this;
     }

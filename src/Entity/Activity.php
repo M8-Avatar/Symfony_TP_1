@@ -38,6 +38,8 @@ abstract class Activity
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'activitiesRegistered')]
     private Collection $participants;
 
+    
+
     public function __construct()
     {
         $this->participants = new ArrayCollection();
@@ -130,5 +132,12 @@ abstract class Activity
         $this->participants->removeElement($participant);
 
         return $this;
+    }
+
+    public function getDiscr(): string
+    {
+        $className = (new \ReflectionClass($this))->getShortName();
+
+        return $className === 'TournamentActivity' ? 'tournament' : 'boardgame';
     }
 }

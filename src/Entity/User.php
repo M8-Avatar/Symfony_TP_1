@@ -6,11 +6,13 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -49,10 +51,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: Activity::class, mappedBy: 'participants')]
     private Collection $activities;
 
+    /**
+     * @var Collection<int, Event>
+     */
+    #[ORM\ManyToMany(targetEntity: Event::class, mappedBy: 'participants')]
+    private Collection $eventsParticipating;
+
     public function __construct()
     {
         $this->events = new ArrayCollection();
         $this->activities = new ArrayCollection();
+        $this->eventsParticipating = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -194,6 +203,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->activities->removeElement($activity)) {
             $activity->removeParticipant($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Event>
+     */
+    public function getEventsParticipating(): Collection
+    {
+        return $this->eventsParticipating;
+    }
+
+    public function addEventsParticipating(Event $eventsParticipating): static
+    {
+        if (!$this->eventsParticipating->contains($eventsParticipating)) {
+            $this->eventsParticipating->add($eventsParticipating);
+            $eventsParticipating->addParticipant($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEventsParticipating(Event $eventsParticipating): static
+    {
+        if ($this->eventsParticipating->removeElement($eventsParticipating)) {
+            $eventsParticipating->removeParticipant($this);
         }
 
         return $this;

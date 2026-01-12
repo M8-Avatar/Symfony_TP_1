@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un événement{% endblock %}
+
+{% block body %}
+<div class="container max-w-2xl py-10">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold tracking-tight text-white">Nouvel Événement</h1>
+        <p class="text-muted-foreground">Remplissez les informations pour publier votre événement.</p>
+    </div>
+
+    <div class="rounded-xl border border-white/10 bg-card p-6 shadow-sm">
+        {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    {{ form_label(form.title) }}
+                    {{ form_widget(form.title) }}
+                </div>
+                <div class="space-y-2">
+                    {{ form_label(form.category) }}
+                    {{ form_widget(form.category) }}
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description) }}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    {{ form_label(form.startAt) }}
+                    {{ form_widget(form.startAt) }}
+                </div>
+                <div class="space-y-2">
+                    {{ form_label(form.endAt) }}
+                    {{ form_widget(form.endAt) }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    {{ form_label(form.location) }}
+                    {{ form_widget(form.location) }}
+                    
+                    <datalist id="locations-list">
+                        <option value="Paris Expo Porte de Versailles">
+                        <option value="Eurexpo Lyon">
+                        <option value="Paris La Défense Arena">
+                        <option value="Online / Discord">
+                        <option value="Salle des fêtes locale">
+                    </datalist>
+                </div>
+                <div class="space-y-2">
+                    {{ form_label(form.capacity) }}
+                    {{ form_widget(form.capacity) }}
+                </div>
+            </div>
+
+            <div class="pt-4 flex justify-end gap-4">
+                <a href="{{ path('app_organizer_dashboard') }}" class="px-4 py-2 rounded-md border border-input bg-transparent hover:bg-accent hover:text-accent-foreground text-sm font-medium">
+                    Annuler
+                </a>
+                <button type="submit" class="px-6 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium">
+                    Créer l'événement
+                </button>
+            </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

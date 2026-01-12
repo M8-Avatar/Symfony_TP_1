@@ -1,17 +1,148 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}GeekEvents{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
-    </head>
-    <body>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                container: {
+                    center: true,
+                    padding: "2rem",
+                },
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        card: {
+                            DEFAULT: "hsl(var(--card))",
+                            foreground: "hsl(var(--card-foreground))",
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            /* On force le thème Sombre (Dark Mode) par défaut pour GeekEvents */
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            
+            --primary: 217.2 91.2% 59.8%; /* Bleu Néon */
+            --primary-foreground: 222.2 47.4% 11.2%;
+            
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 48%;
+            
+            --radius: 0.5rem;
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container flex h-16 items-center justify-between">
+            <div class="flex items-center gap-2">
+                <a href="{{ path('app_home') }}" class="flex items-center space-x-2">
+                    <span class="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                        GeekEvents
+                    </span>
+                </a>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <a href="{{ path('app_home') }}" class="transition-colors hover:text-primary">Accueil</a>
+                <a href="#" class="transition-colors hover:text-primary text-muted-foreground">Événements</a>
+            </nav>
+
+            <div class="flex items-center gap-4">
+                {% if app.user %}
+                    <span class="text-sm text-muted-foreground hidden md:inline">
+                        Hello, <span class="text-primary font-bold">{{ app.user.profile.pseudo ?? app.user.email }}</span>
+                    </span>
+
+                    {% if is_granted('ROLE_ORGANIZER') %}
+                        <a href="{{ path('app_organizer_dashboard') }}" class="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors border border-blue-500/30 px-3 py-1 rounded">
+                            Dashboard
+                        </a>
+                    {% endif %}
+                    <a href="{{ path('app_logout') }}" class="text-sm font-medium text-red-400 hover:text-red-300 transition-colors">
+                        Déconnexion
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                        Se connecter
+                    </a>
+                    <a href="{{ path('app_register') }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 transition-colors">
+                        Inscription
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1">
         {% block body %}{% endblock %}
-    </body>
+    </main>
+
+    <footer class="border-t border-border py-6 md:py-0">
+        <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+            <p class="text-center text-sm leading-loose text-muted-foreground md:text-left">
+                © 2026 GeekEvents. Construit avec Symfony & Passion.
+            </p>
+        </div>
+    </footer>
+
+</body>
 </html>
