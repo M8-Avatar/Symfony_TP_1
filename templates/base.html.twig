@@ -104,6 +104,12 @@
                     <a href="{{ path('app_home') }}" class="transition-colors text-foreground/80 hover:text-primary">Accueil</a>
                     <a href="{{ path('app_home') }}#events" class="transition-colors text-foreground/80 hover:text-primary">Événements</a>
                     
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('admin') }}" class="text-xs font-bold text-red-500 border border-red-500/50 px-2 py-1 rounded hover:bg-red-500/10 transition-colors">
+                            ADMIN
+                        </a>
+                    {% endif %}
+
                     {% if app.user %}
                         <a href="{{ path('app_user_profile') }}" class="transition-colors text-foreground/80 hover:text-primary relative group">
                             Mon espace

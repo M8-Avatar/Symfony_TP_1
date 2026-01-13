@@ -81,15 +81,16 @@ class UserController extends AbstractController
 
     #[Route('/me/edit', name: 'app_user_edit')]
     public function edit(Request $request, EntityManagerInterface $entityManager): Response
-    {
+    {   
+        /** @var \App\Entity\User $user */
         $user = $this->getUser();
-        $profile = $user->getProfile(); // On récupère le profil lié au user
+        $profile = $user->getProfile();
 
         $form = $this->createForm(ProfileType::class, $profile);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush(); // Pas besoin de persist, l'objet existe déjà
+            $entityManager->flush();
             
             $this->addFlash('success', 'Profil mis à jour avec succès !');
             return $this->redirectToRoute('app_user_profile');
