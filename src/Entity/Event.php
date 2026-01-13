@@ -50,16 +50,28 @@ class Event
     #[ORM\Column(length: 255)]
     private ?string $location = null;
 
+    // ❌ L'ancienne relation participants a été supprimée ici
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $imageName = null;
+
+    #[Vich\UploadableField(mapping: 'event_images', fileNameProperty: 'imageName')]
+    private ?File $imageFile = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
+
     /**
-     * @var Collection<int, User>
+     * @var Collection<int, Registration>
      */
-    #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'eventsParticipating')]
-    private Collection $participants;
+    #[ORM\OneToMany(targetEntity: Registration::class, mappedBy: 'event', orphanRemoval: true)]
+    private Collection $registrations;
 
     public function __construct()
     {
         $this->activities = new ArrayCollection();
-        $this->participants = new ArrayCollection();
+        // $this->participants supprimé
+        $this->registrations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -193,39 +205,6 @@ class Event
         return $this;
     }
 
-    /**
-     * @return Collection<int, User>
-     */
-    public function getParticipants(): Collection
-    {
-        return $this->participants;
-    }
-
-    public function addParticipant(User $participant): static
-    {
-        if (!$this->participants->contains($participant)) {
-            $this->participants->add($participant);
-        }
-
-        return $this;
-    }
-
-    public function removeParticipant(User $participant): static
-    {
-        $this->participants->removeElement($participant);
-
-        return $this;
-    }
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $imageName = null;
-
-    #[Vich\UploadableField(mapping: 'event_images', fileNameProperty: 'imageName')]
-    private ?File $imageFile = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $updatedAt = null;
-
     public function setImageFile(?File $imageFile = null): void
     {
         $this->imageFile = $imageFile;
@@ -249,4 +228,34 @@ class Event
     {
         return $this->imageName;
     }
+
+    /**
+     * @return Collection<int, Registration>
+     */
+    public function getRegistrations(): Collection
+    {
+        return $this->registrations;
     }
+
+    public function addRegistration(Registration $registration): static
+    {
+        if (!$this->registrations->contains($registration)) {
+            $this->registrations->add($registration);
+            $registration->setEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRegistration(Registration $registration): static
+    {
+        if ($this->registrations->removeElement($registration)) {
+            // set the owning side to null (unless already changed)
+            if ($registration->getEvent() === $this) {
+                $registration->setEvent(null);
+            }
+        }
+
+        return $this;
+    }
+}

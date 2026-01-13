@@ -47,8 +47,8 @@
                             </td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                    {% if event.participants|length >= event.capacity %} bg-red-500/20 text-red-400 {% else %} bg-green-500/20 text-green-400 {% endif %}">
-                                    {{ event.participants|length }} / {{ event.capacity }}
+                                    {% if event.registrations|length >= event.capacity %} bg-red-500/20 text-red-400 {% else %} bg-green-500/20 text-green-400 {% endif %}">
+                                    {{ event.registrations|length }} / {{ event.capacity }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right flex justify-end gap-2 items-center h-full">

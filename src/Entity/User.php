@@ -51,20 +51,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToMany(targetEntity: Activity::class, mappedBy: 'participants')]
     private Collection $activities;
 
-    /**
-     * @var Collection<int, Event>
-     */
-    #[ORM\ManyToMany(targetEntity: Event::class, mappedBy: 'participants')]
-    private Collection $eventsParticipating;
+    // ❌ L'ancienne relation eventsParticipating a été supprimée ici
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $createdAt = null;
+
+    /**
+     * @var Collection<int, Registration>
+     */
+    #[ORM\OneToMany(targetEntity: Registration::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $registrations;
 
     public function __construct()
     {
         $this->events = new ArrayCollection();
         $this->activities = new ArrayCollection();
-        $this->eventsParticipating = new ArrayCollection();
+        // $this->eventsParticipating supprimé
+        $this->registrations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -211,41 +214,44 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, Event>
-     */
-    public function getEventsParticipating(): Collection
-    {
-        return $this->eventsParticipating;
-    }
-
-    public function addEventsParticipating(Event $eventsParticipating): static
-    {
-        if (!$this->eventsParticipating->contains($eventsParticipating)) {
-            $this->eventsParticipating->add($eventsParticipating);
-            $eventsParticipating->addParticipant($this);
-        }
-
-        return $this;
-    }
-
-    public function removeEventsParticipating(Event $eventsParticipating): static
-    {
-        if ($this->eventsParticipating->removeElement($eventsParticipating)) {
-            $eventsParticipating->removeParticipant($this);
-        }
-
-        return $this;
-    }
-
     public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    public function setCreatedAt(?\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Registration>
+     */
+    public function getRegistrations(): Collection
+    {
+        return $this->registrations;
+    }
+
+    public function addRegistration(Registration $registration): static
+    {
+        if (!$this->registrations->contains($registration)) {
+            $this->registrations->add($registration);
+            $registration->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRegistration(Registration $registration): static
+    {
+        if ($this->registrations->removeElement($registration)) {
+            // set the owning side to null (unless already changed)
+            if ($registration->getUser() === $this) {
+                $registration->setUser(null);
+            }
+        }
 
         return $this;
     }

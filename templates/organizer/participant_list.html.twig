@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Participants - GeekEvents{% endblock %}
+
+{% block body %}
+<div class="container py-10">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-white">Gestion des inscriptions</h1>
+            <p class="text-muted-foreground">Liste des personnes inscrites à vos événements.</p>
+        </div>
+        </div>
+
+    <div class="rounded-xl border border-white/10 bg-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-muted text-muted-foreground uppercase text-xs">
+                    <tr>
+                        <th class="px-6 py-4 font-medium">Participant</th>
+                        <th class="px-6 py-4 font-medium">Événement concerné</th>
+                        <th class="px-6 py-4 font-medium">Contact</th>
+                        <th class="px-6 py-4 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for item in registrations %}
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <img src="{{ item.user.profile.avatarUrl ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=' ~ item.user.email }}" 
+                                         alt="Avatar" class="h-10 w-10 rounded-full border border-white/10 bg-muted">
+                                    <div>
+                                        <div class="font-medium text-white">{{ item.user.profile.pseudo }}</div>
+                                        <div class="text-xs text-muted-foreground">Univers : {{ item.user.profile.favoriteUniverse ?? 'N/A' }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4">
+                                <a href="{{ path('app_event_show', {'id': item.event.id}) }}" class="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    {{ item.event.title }}
+                                </a>
+                                <div class="text-xs text-gray-500 mt-1">
+                                    {{ item.event.startAt|date('d/m/Y') }}
+                                </div>
+                            </td>
+
+                            <td class="px-6 py-4 text-gray-300">
+                                <a href="mailto:{{ item.user.email }}" class="hover:underline flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                    {{ item.user.email }}
+                                </a>
+                            </td>
+
+                            <td class="px-6 py-4 text-right">
+                                <form method="post" action="{{ path('app_organizer_participant_delete', {'eventId': item.event.id, 'userId': item.user.id}) }}" onsubmit="return confirm('Voulez-vous vraiment désinscrire {{ item.user.profile.pseudo }} de l\'événement {{ item.event.title }} ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_participant' ~ item.event.id ~ item.user.id) }}">
+                                    <button class="text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded text-xs font-medium transition-colors border border-red-500/20">
+                                        Désinscrire
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-muted-foreground">
+                                <div class="flex flex-col items-center gap-2">
+                                    <svg class="w-10 h-10 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <p>Aucun participant inscrit pour le moment.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

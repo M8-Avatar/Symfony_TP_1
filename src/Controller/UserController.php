@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Repository\EventRepository;
+use App\Repository\RegistrationRepository;
+use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -21,16 +23,13 @@ class UserController extends AbstractController
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
-        // 1. Données pour TOUT LE MONDE (Participations)
-        $myParticipations = $user->getEventsParticipating();
+        $myRegistrations = $user->getRegistrations();
 
-        // 2. Données pour les ORGANISATEURS seulement
         $organizerData = [];
         
         if ($this->isGranted('ROLE_ORGANIZER')) {
             $myCreatedEvents = $eventRepository->findBy(['organizer' => $user], ['startAt' => 'ASC']);
             
-            // Calculs des stats (copié de ton ancien controller)
             $nextEvent = null;
             $now = new \DateTime();
             $upcomingActivities = [];
@@ -43,10 +42,11 @@ class UserController extends AbstractController
                     $nextEvent = $event;
                 }
 
+                $totalParticipants += count($event->getRegistrations());
+
                 foreach ($event->getActivities() as $activity) {
                     $totalActivities++;
-                    $totalParticipants += count($activity->getParticipants());
-
+                    
                     if ($activity->getStartAt() > $now) {
                         $upcomingActivities[] = $activity;
                     }
@@ -74,8 +74,8 @@ class UserController extends AbstractController
 
         return $this->render('user/index.html.twig', [
             'user' => $user,
-            'participations' => $myParticipations,
-            'organizerData' => $organizerData, // Sera vide si pas admin
+            'participations' => $myRegistrations,
+            'organizerData' => $organizerData,
         ]);
     }
 
@@ -91,7 +91,6 @@ class UserController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->flush();
-            
             $this->addFlash('success', 'Profil mis à jour avec succès !');
             return $this->redirectToRoute('app_user_profile');
         }
@@ -99,5 +98,62 @@ class UserController extends AbstractController
         return $this->render('user/edit.html.twig', [
             'form' => $form,
         ]);
+    }
+
+    #[Route('/my-participants', name: 'app_organizer_participant_list')]
+    public function listParticipants(RegistrationRepository $registrationRepo): Response
+    {
+        $user = $this->getUser();
+        
+        $registrations = $registrationRepo->createQueryBuilder('r')
+            ->join('r.event', 'e')
+            ->where('e.organizer = :organizer')
+            ->setParameter('organizer', $user)
+            ->orderBy('r.registeredAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $this->render('organizer/participant_list.html.twig', [
+            'registrations' => $registrations,
+        ]);
+    }
+
+    #[Route('/event/{eventId}/remove-participant/{userId}', name: 'app_organizer_participant_delete', methods: ['POST'])]
+    public function removeParticipant(
+        int $eventId, 
+        int $userId, 
+        EventRepository $eventRepository, 
+        UserRepository $userRepository,
+        RegistrationRepository $registrationRepo,
+        EntityManagerInterface $entityManager,
+        Request $request
+    ): Response
+    {
+        $event = $eventRepository->find($eventId);
+        $participant = $userRepository->find($userId);
+
+        if ($event->getOrganizer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($this->isCsrfTokenValid('delete_participant'.$event->getId().$participant->getId(), $request->request->get('_token'))) {
+            
+            $registration = $registrationRepo->findOneBy(['event' => $event, 'user' => $participant]);
+
+            if ($registration) {
+                $entityManager->remove($registration);
+
+                foreach ($event->getActivities() as $activity) {
+                    if ($activity->getParticipants()->contains($participant)) {
+                        $activity->removeParticipant($participant);
+                    }
+                }
+
+                $entityManager->flush();
+                $this->addFlash('success', 'Participant désinscrit avec succès.');
+            }
+        }
+
+        return $this->redirectToRoute('app_organizer_participant_list');
     }
 }
