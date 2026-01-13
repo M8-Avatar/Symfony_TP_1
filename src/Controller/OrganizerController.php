@@ -21,39 +21,58 @@ use App\Form\BoardGameType;
 class OrganizerController extends AbstractController
 {
     #[Route('/dashboard', name: 'app_organizer_dashboard')]
-    #[Route('/dashboard', name: 'app_organizer_dashboard')]
     public function index(EventRepository $eventRepository): Response
     {
         $user = $this->getUser();
+        // Récupérer mes événements triés par date
         $myEvents = $eventRepository->findBy(['organizer' => $user], ['startAt' => 'ASC']);
 
         $nextEvent = null;
         $now = new \DateTime();
 
+        $upcomingActivities = [];
+        $uniqueParticipants = []; // Pour la liste des intervenants
+
         $totalEvents = count($myEvents);
-        
         $totalParticipants = 0;
         $totalActivities = 0;
 
         foreach ($myEvents as $event) {
-            $totalActivities += count($event->getActivities());
-
-            foreach ($myEvents as $event) {
-            if ($event->getStartAt() > $now) {
+            // Calcul du prochain événement global
+            if (!$nextEvent && $event->getStartAt() > $now) {
                 $nextEvent = $event;
-                break;
+            }
+
+            // Calcul des activités et participants
+            foreach ($event->getActivities() as $activity) {
+                $totalActivities++;
+                $totalParticipants += count($activity->getParticipants());
+
+                // Si l'activité est dans le futur, on l'ajoute à la liste "À venir"
+                if ($activity->getStartAt() > $now) {
+                    $upcomingActivities[] = $activity;
+                }
+
+                // Récupération des participants uniques (simulés comme intervenants)
+                foreach ($activity->getParticipants() as $participant) {
+                    $uniqueParticipants[$participant->getId()] = $participant;
+                }
             }
         }
-        }
+
+        // Trier les activités à venir par date la plus proche
+        usort($upcomingActivities, fn($a, $b) => $a->getStartAt() <=> $b->getStartAt());
 
         return $this->render('organizer/index.html.twig', [
             'events' => $myEvents,
             'nextEvent' => $nextEvent,
+            'upcomingActivities' => array_slice($upcomingActivities, 0, 5), // Les 5 prochaines
+            'intervenants' => array_slice($uniqueParticipants, 0, 6), // Les 6 premiers
             'stats' => [
                 'totalEvents' => $totalEvents,
                 'totalActivities' => $totalActivities,
                 'totalParticipants' => $totalParticipants,
-                'intervenants' => 0 
+                'intervenants' => count($uniqueParticipants)
             ]
         ]);
     }
@@ -66,12 +85,9 @@ class OrganizerController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-
             $event->setOrganizer($this->getUser());
-            
             $entityManager->persist($event);
             $entityManager->flush();
-
             $this->addFlash('success', 'Événement créé avec succès !');
 
             return $this->redirectToRoute('app_organizer_dashboard');
@@ -85,13 +101,12 @@ class OrganizerController extends AbstractController
     #[Route('/event/{id}/add-tournament', name: 'app_organizer_add_tournament')]
     public function addTournament(Event $event, Request $request, EntityManagerInterface $entityManager): Response
     {
-        // Vérifie que c'est bien MON événement
         if ($event->getOrganizer() !== $this->getUser()) {
             throw $this->createAccessDeniedException();
         }
 
         $activity = new TournamentActivity();
-        $activity->setEvent($event); // On lie l'activité à l'événement
+        $activity->setEvent($event);
 
         $form = $this->createForm(TournamentType::class, $activity);
         $form->handleRequest($request);
@@ -136,6 +151,4 @@ class OrganizerController extends AbstractController
             'type' => 'Jeu de Plateau'
         ]);
     }
-
-    
 }

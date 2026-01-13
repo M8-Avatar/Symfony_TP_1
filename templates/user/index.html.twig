@@ -1,0 +1,147 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Espace - GeekEvents{% endblock %}
+
+{% block body %}
+<div class="container py-10 space-y-12">
+    
+    <div class="flex flex-col md:flex-row items-center gap-6 p-6 rounded-xl border border-white/10 bg-card shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+        
+        <div class="relative">
+            <img src="{{ user.profile.avatarUrl ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=' ~ user.email }}" 
+                 alt="Avatar" 
+                 class="w-24 h-24 rounded-full border-4 border-background bg-muted object-cover">
+        </div>
+        
+        <div class="text-center md:text-left flex-1 space-y-1">
+            <h1 class="text-2xl font-bold text-white">{{ user.profile.pseudo }}</h1>
+            <p class="text-muted-foreground">{{ user.email }}</p>
+            
+            <div class="flex flex-wrap gap-2 justify-center md:justify-start mt-2">
+                {% if is_granted('ROLE_ORGANIZER') %}
+                    <span class="px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        Organisateur
+                    </span>
+                {% else %}
+                    <span class="px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                        Participant
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+            <button class="px-4 py-2 rounded-md border border-input bg-transparent hover:bg-accent text-sm font-medium transition-colors text-white">
+                Modifier mon profil / Mot de passe
+            </button>
+        </div>
+    </div>
+
+    {% if is_granted('ROLE_ORGANIZER') and organizerData is not empty %}
+        <div class="space-y-8 border-b border-white/10 pb-12">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Gestion Organisateur
+                </h2>
+                <a href="{{ path('app_organizer_event_new') }}" class="px-4 py-2 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700 transition-colors">
+                    + Créer un événement
+                </a>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-4 rounded-xl bg-card border border-white/5">
+                    <div class="text-2xl font-bold text-white">{{ organizerData.stats.totalEvents }}</div>
+                    <div class="text-xs text-muted-foreground uppercase">Événements</div>
+                </div>
+                <div class="p-4 rounded-xl bg-card border border-white/5">
+                    <div class="text-2xl font-bold text-white">{{ organizerData.stats.totalActivities }}</div>
+                    <div class="text-xs text-muted-foreground uppercase">Activités</div>
+                </div>
+                <div class="p-4 rounded-xl bg-card border border-white/5">
+                    <div class="text-2xl font-bold text-white">{{ organizerData.stats.totalParticipants }}</div>
+                    <div class="text-xs text-muted-foreground uppercase">Inscrits</div>
+                </div>
+                <div class="p-4 rounded-xl bg-card border border-white/5">
+                    <div class="text-2xl font-bold text-green-400">{{ organizerData.stats.totalParticipants * 15 }} €</div>
+                    <div class="text-xs text-muted-foreground uppercase">Revenus Est.</div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold text-white mb-4">Mes événements créés</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for event in organizerData.createdEvents %}
+                        <a href="{{ path('app_event_show', {'id': event.id}) }}" class="group block rounded-xl border border-white/10 bg-card overflow-hidden hover:border-purple-500/50 transition-all">
+                            <div class="relative h-32 w-full bg-muted">
+                                {% if event.imageName %}
+                                    <img src="{{ vich_uploader_asset(event, 'imageFile') }}" class="h-full w-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt="Cover">
+                                {% else %}
+                                    <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800" class="h-full w-full object-cover opacity-60" alt="Defaut">
+                                {% endif %}
+                                <div class="absolute bottom-2 left-2">
+                                    <span class="text-xs font-bold text-white bg-black/60 px-2 py-1 rounded">Admin</span>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-bold text-white truncate">{{ event.title }}</h4>
+                                <p class="text-sm text-gray-400">{{ event.participants|length }} participants</p>
+                            </div>
+                        </a>
+                    {% else %}
+                        <p class="text-muted-foreground italic col-span-3">Vous n'avez pas encore créé d'événement.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+
+    <div class="space-y-6">
+        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 5v2"/><path d="M15 11v2"/><path d="M15 17v2"/><path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2Z"/></svg>
+            Mes Billets & Inscriptions
+        </h2>
+
+        {% if participations is empty %}
+            <div class="text-center py-12 border border-dashed border-white/10 rounded-xl bg-card/30">
+                <p class="text-muted-foreground text-lg">Vous n'êtes inscrit à aucun événement.</p>
+                <a href="{{ path('app_home') }}#events" class="inline-block mt-4 text-primary hover:underline font-medium">Voir les événements disponibles →</a>
+            </div>
+        {% else %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for event in participations %}
+                    <div class="group rounded-xl border border-white/10 bg-card text-card-foreground shadow-sm overflow-hidden hover:border-blue-500/50 transition-all">
+                        <a href="{{ path('app_event_show', {'id': event.id}) }}" class="block relative h-40 w-full overflow-hidden bg-muted">
+                            {% if event.imageName %}
+                                <img src="{{ vich_uploader_asset(event, 'imageFile') }}" class="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="{{ event.title }}">
+                            {% else %}
+                                <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800" class="h-full w-full object-cover opacity-80" alt="Defaut">
+                            {% endif %}
+                            <div class="absolute top-2 right-2">
+                                <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-green-500 text-white shadow-sm">
+                                    Billet Validé
+                                </span>
+                            </div>
+                        </a>
+                        <div class="p-5 space-y-3">
+                            <a href="{{ path('app_event_show', {'id': event.id}) }}" class="block font-bold text-lg leading-none text-white group-hover:text-blue-400 transition-colors">
+                                {{ event.title }}
+                            </a>
+                            <div class="space-y-1 text-sm text-gray-400">
+                                <div>📅 {{ event.startAt|date('d/m/Y') }}</div>
+                                <div>📍 {{ event.location }}</div>
+                            </div>
+                            <a href="{{ path('app_event_register', {'id': event.id}) }}" class="block w-full text-center text-xs text-red-400 hover:text-red-300 hover:underline mt-2">
+                                Annuler ma venue
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

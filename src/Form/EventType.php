@@ -13,6 +13,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Vich\UploaderBundle\Form\Type\VichImageType;
 
 class EventType extends AbstractType
 {
@@ -60,6 +61,13 @@ class EventType extends AbstractType
             ->add('capacity', IntegerType::class, [
                 'label' => 'Capacité max',
                 'attr' => ['class' => 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground']
+            ])
+            ->add('imageFile', VichImageType::class, [
+                'label' => 'Image de couverture',
+                'required' => false,
+                'allow_delete' => true,
+                'download_uri' => false,
+                'attr' => ['class' => 'mb-4']
             ])
         ;
     }
