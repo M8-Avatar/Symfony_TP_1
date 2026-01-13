@@ -8,6 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class EventController extends AbstractController
 {
@@ -19,47 +20,62 @@ class EventController extends AbstractController
         ]);
     }
 
-    #[Route('/activity/{id}/join', name: 'app_activity_join')]
-    public function join(Activity $activity, EntityManagerInterface $entityManager): Response
+    #[Route('/event/{id}/register', name: 'app_event_register')]
+    #[IsGranted('ROLE_USER')]
+    public function register(Event $event, EntityManagerInterface $entityManager): Response
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
-        // Sécurité : Il faut être connecté
-        if (!$user) {
-            return $this->redirectToRoute('app_login');
-        }
-
-        // Logique : Si déjà participant => on enlève. Sinon => on ajoute.
-        if ($activity->getParticipants()->contains($user)) {
-            $activity->removeParticipant($user);
-            $this->addFlash('success', 'Vous êtes désinscrit de l\'activité.');
+        if ($event->getParticipants()->contains($user)) {
+            // 1. Désinscription de l'événement principal
+            $event->removeParticipant($user);
+            
+            // 2. Désinscription automatique de toutes les activités de cet événement
+            foreach ($event->getActivities() as $activity) {
+                if ($activity->getParticipants()->contains($user)) {
+                    $activity->removeParticipant($user);
+                }
+            }
+            
+            $this->addFlash('warning', 'Désinscription effectuée (y compris de vos activités).');
         } else {
-            $activity->addParticipant($user);
-            $this->addFlash('success', 'Inscription validée !');
+            // Inscription : On vérifie la capacité !
+            if ($event->getParticipants()->count() >= $event->getCapacity()) {
+                $this->addFlash('danger', 'Désolé, cet événement est complet !');
+                return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+            }
+
+            $event->addParticipant($user);
+            $this->addFlash('success', 'Bravo ! Votre place est réservée.');
         }
 
         $entityManager->flush();
 
-        // On redirige vers la page de l'événement parent
-        return $this->redirectToRoute('app_event_show', ['id' => $activity->getEvent()->getId()]);
+        return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
     }
 
-    #[Route('/event/{id}/register', name: 'app_event_register')]
-    public function register(Event $event, EntityManagerInterface $entityManager): Response
+    #[Route('/activity/{id}/join', name: 'app_activity_join')]
+    #[IsGranted('ROLE_USER')]
+    public function join(Activity $activity, EntityManagerInterface $entityManager): Response
     {
+        /** @var \App\Entity\User $user */
         $user = $this->getUser();
+        $event = $activity->getEvent();
 
-        if (!$user) {
-            return $this->redirectToRoute('app_login');
+        // 🔒 SÉCURITÉ : On ne peut pas rejoindre une activité si on n'est pas dans l'événement !
+        if (!$event->getParticipants()->contains($user)) {
+            $this->addFlash('danger', 'Vous devez d\'abord réserver votre place pour l\'événement global avant de rejoindre une activité.');
+            return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
         }
 
-        if ($event->getParticipants()->contains($user)) {
-            $event->removeParticipant($user);
-            $this->addFlash('success', 'Désinscription de l\'événement effectuée.');
+        // Logique Toggle (Rejoindre / Quitter)
+        if ($activity->getParticipants()->contains($user)) {
+            $activity->removeParticipant($user);
+            $this->addFlash('warning', 'Vous êtes désinscrit de l\'activité.');
         } else {
-            $event->addParticipant($user);
-            $this->addFlash('success', 'Vous participez à l\'événement !');
+            $activity->addParticipant($user);
+            $this->addFlash('success', 'Inscription à l\'activité validée !');
         }
 
         $entityManager->flush();
