@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Repository\EventRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -150,5 +151,55 @@ class OrganizerController extends AbstractController
             'event' => $event,
             'type' => 'Jeu de Plateau'
         ]);
+    }
+
+    #[Route('/my-events', name: 'app_organizer_event_list')]
+    public function list(EventRepository $eventRepository): Response
+    {
+        $user = $this->getUser();
+        $events = $eventRepository->findBy(['organizer' => $user], ['startAt' => 'DESC']);
+
+        return $this->render('organizer/event_list.html.twig', [
+            'events' => $events,
+        ]);
+    }
+
+    #[Route('/event/{id}/edit', name: 'app_organizer_event_edit')]
+    public function edit(Request $request, Event $event, EntityManagerInterface $entityManager): Response
+    {
+        // Sécurité : Vérifier que c'est bien MON événement
+        if ($event->getOrganizer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $form = $this->createForm(EventType::class, $event);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', 'Événement modifié avec succès !');
+            return $this->redirectToRoute('app_organizer_event_list');
+        }
+
+        return $this->render('organizer/edit.html.twig', [
+            'event' => $event,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/event/{id}/delete', name: 'app_organizer_event_delete', methods: ['POST'])]
+    public function delete(Request $request, Event $event, EntityManagerInterface $entityManager): Response
+    {
+        if ($event->getOrganizer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($this->isCsrfTokenValid('delete'.$event->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($event);
+            $entityManager->flush();
+            $this->addFlash('success', 'Événement supprimé.');
+        }
+
+        return $this->redirectToRoute('app_organizer_event_list');
     }
 }

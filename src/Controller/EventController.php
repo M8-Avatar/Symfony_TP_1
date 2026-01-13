@@ -28,10 +28,8 @@ class EventController extends AbstractController
         $user = $this->getUser();
 
         if ($event->getParticipants()->contains($user)) {
-            // 1. Désinscription de l'événement principal
             $event->removeParticipant($user);
             
-            // 2. Désinscription automatique de toutes les activités de cet événement
             foreach ($event->getActivities() as $activity) {
                 if ($activity->getParticipants()->contains($user)) {
                     $activity->removeParticipant($user);
@@ -40,7 +38,6 @@ class EventController extends AbstractController
             
             $this->addFlash('warning', 'Désinscription effectuée (y compris de vos activités).');
         } else {
-            // Inscription : On vérifie la capacité !
             if ($event->getParticipants()->count() >= $event->getCapacity()) {
                 $this->addFlash('danger', 'Désolé, cet événement est complet !');
                 return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);

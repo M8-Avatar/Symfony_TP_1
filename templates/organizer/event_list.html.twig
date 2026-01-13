@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Événements - GeekEvents{% endblock %}
+
+{% block body %}
+<div class="container py-10">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-white">Gestion de mes événements</h1>
+            <p class="text-muted-foreground">Retrouvez ici tous les événements que vous organisez.</p>
+        </div>
+        <a href="{{ path('app_organizer_event_new') }}" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-md font-medium transition-colors">
+            + Nouvel événement
+        </a>
+    </div>
+
+    <div class="rounded-xl border border-white/10 bg-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-muted text-muted-foreground uppercase text-xs">
+                    <tr>
+                        <th class="px-6 py-4 font-medium">Événement</th>
+                        <th class="px-6 py-4 font-medium">Date</th>
+                        <th class="px-6 py-4 font-medium">Lieu</th>
+                        <th class="px-6 py-4 font-medium">Participants</th>
+                        <th class="px-6 py-4 font-medium text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for event in events %}
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    {% if event.imageName %}
+                                        <img src="{{ vich_uploader_asset(event, 'imageFile') }}" class="h-10 w-10 rounded object-cover" alt="">
+                                    {% else %}
+                                        <div class="h-10 w-10 rounded bg-white/10"></div>
+                                    {% endif %}
+                                    <span class="font-medium text-white">{{ event.title }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-300">
+                                {{ event.startAt|date('d/m/Y H:i') }}
+                            </td>
+                            <td class="px-6 py-4 text-gray-300">
+                                {{ event.location }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium 
+                                    {% if event.participants|length >= event.capacity %} bg-red-500/20 text-red-400 {% else %} bg-green-500/20 text-green-400 {% endif %}">
+                                    {{ event.participants|length }} / {{ event.capacity }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right flex justify-end gap-2 items-center h-full">
+                                <a href="{{ path('app_event_show', {'id': event.id}) }}" class="text-gray-400 hover:text-white" title="Voir">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </a>
+                                <a href="{{ path('app_organizer_event_edit', {'id': event.id}) }}" class="text-blue-400 hover:text-blue-300" title="Modifier">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </a>
+                                <form method="post" action="{{ path('app_organizer_event_delete', {'id': event.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet événement ?');" class="inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.id) }}">
+                                    <button class="text-red-400 hover:text-red-300 pt-1" title="Supprimer">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-muted-foreground">
+                                Vous n'avez pas encore créé d'événement.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

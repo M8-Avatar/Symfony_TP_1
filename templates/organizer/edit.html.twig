@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier l'événement{% endblock %}
+
+{% block body %}
+<div class="container max-w-2xl py-10">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold tracking-tight text-white">Modifier : {{ event.title }}</h1>
+        <p class="text-muted-foreground">Mettez à jour les informations de votre événement.</p>
+    </div>
+
+    <div class="rounded-xl border border-white/10 bg-card p-6 shadow-sm">
+        {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
+            {{ form_widget(form) }}
+            
+            <div class="pt-4 flex justify-end gap-4">
+                <a href="{{ path('app_organizer_event_list') }}" class="px-4 py-2 rounded-md border border-input bg-transparent hover:bg-accent text-white text-sm">
+                    Annuler
+                </a>
+                <button type="submit" class="px-6 py-2 rounded-md bg-primary text-white hover:bg-primary/90 text-sm font-medium">
+                    Enregistrer les modifications
+                </button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
