@@ -11,6 +11,10 @@ use App\Entity\Event;
 use App\Form\EventType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use App\Entity\TournamentActivity;
+use App\Entity\BoardGameActivity;
+use App\Form\TournamentType;
+use App\Form\BoardGameType;
 
 #[Route('/organizer')]
 #[IsGranted('ROLE_ORGANIZER')]
@@ -75,6 +79,61 @@ class OrganizerController extends AbstractController
 
         return $this->render('organizer/new.html.twig', [
             'form' => $form,
+        ]);
+    }
+
+    #[Route('/event/{id}/add-tournament', name: 'app_organizer_add_tournament')]
+    public function addTournament(Event $event, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        // Vérifie que c'est bien MON événement
+        if ($event->getOrganizer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $activity = new TournamentActivity();
+        $activity->setEvent($event); // On lie l'activité à l'événement
+
+        $form = $this->createForm(TournamentType::class, $activity);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($activity);
+            $entityManager->flush();
+            $this->addFlash('success', 'Tournoi ajouté avec succès !');
+            return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+        }
+
+        return $this->render('organizer/add_activity.html.twig', [
+            'form' => $form,
+            'event' => $event,
+            'type' => 'Tournoi'
+        ]);
+    }
+
+    #[Route('/event/{id}/add-boardgame', name: 'app_organizer_add_boardgame')]
+    public function addBoardGame(Event $event, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        if ($event->getOrganizer() !== $this->getUser()) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $activity = new BoardGameActivity();
+        $activity->setEvent($event);
+
+        $form = $this->createForm(BoardGameType::class, $activity);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->persist($activity);
+            $entityManager->flush();
+            $this->addFlash('success', 'Jeu de plateau ajouté avec succès !');
+            return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+        }
+
+        return $this->render('organizer/add_activity.html.twig', [
+            'form' => $form,
+            'event' => $event,
+            'type' => 'Jeu de Plateau'
         ]);
     }
 
