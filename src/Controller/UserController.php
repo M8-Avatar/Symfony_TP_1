@@ -7,6 +7,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Form\ProfileType;
+use Symfony\Component\HttpFoundation\Request;
+use Doctrine\ORM\EntityManagerInterface;
 
 #[Route('/user')]
 #[IsGranted('ROLE_USER')]
@@ -73,6 +76,27 @@ class UserController extends AbstractController
             'user' => $user,
             'participations' => $myParticipations,
             'organizerData' => $organizerData, // Sera vide si pas admin
+        ]);
+    }
+
+    #[Route('/me/edit', name: 'app_user_edit')]
+    public function edit(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+        $profile = $user->getProfile(); // On récupère le profil lié au user
+
+        $form = $this->createForm(ProfileType::class, $profile);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush(); // Pas besoin de persist, l'objet existe déjà
+            
+            $this->addFlash('success', 'Profil mis à jour avec succès !');
+            return $this->redirectToRoute('app_user_profile');
+        }
+
+        return $this->render('user/edit.html.twig', [
+            'form' => $form,
         ]);
     }
 }

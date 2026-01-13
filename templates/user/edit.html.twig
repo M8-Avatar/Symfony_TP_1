@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier mon profil{% endblock %}
+
+{% block body %}
+<div class="container max-w-md py-10">
+    <div class="rounded-xl border border-white/10 bg-card p-8 shadow-lg">
+        <h1 class="text-2xl font-bold text-white mb-6 text-center">Modifier mon profil</h1>
+
+        {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
+            
+            <div class="space-y-2">
+                {{ form_label(form.pseudo, null, {'label_attr': {'class': 'text-sm font-medium text-white'}}) }}
+                {{ form_widget(form.pseudo) }}
+                {{ form_errors(form.pseudo) }}
+            </div>
+
+            <div class="space-y-2">
+                {{ form_label(form.favoriteUniverse, null, {'label_attr': {'class': 'text-sm font-medium text-white'}}) }}
+                {{ form_widget(form.favoriteUniverse) }}
+            </div>
+
+            <div class="space-y-2">
+                {{ form_label(form.bio, null, {'label_attr': {'class': 'text-sm font-medium text-white'}}) }}
+                {{ form_widget(form.bio) }}
+            </div>
+
+            <div class="pt-4 flex gap-4">
+                <a href="{{ path('app_user_profile') }}" class="w-1/2 flex justify-center py-2 px-4 border border-input rounded-md shadow-sm text-sm font-medium text-white bg-transparent hover:bg-accent focus:outline-none">
+                    Annuler
+                </a>
+                <button type="submit" class="w-1/2 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                    Enregistrer
+                </button>
+            </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
