@@ -16,6 +16,26 @@ class EventRepository extends ServiceEntityRepository
         parent::__construct($registry, Event::class);
     }
 
+    public function findBySearch(?string $query, ?string $category): array
+    {
+        $qb = $this->createQueryBuilder('e')
+            ->orderBy('e.startAt', 'ASC');
+
+        // 1. Recherche textuelle (Titre ou Description)
+        if ($query) {
+            $qb->andWhere('e.title LIKE :query OR e.description LIKE :query')
+               ->setParameter('query', '%' . $query . '%');
+        }
+
+        // 2. Filtre par catégorie
+        if ($category) {
+            $qb->andWhere('e.category = :category')
+               ->setParameter('category', $category);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     //    /**
     //     * @return Event[] Returns an array of Event objects
     //     */
