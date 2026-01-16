@@ -3,8 +3,6 @@
 namespace App\Form;
 
 use App\Entity\Event;
-use App\Entity\User;
-use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
@@ -22,45 +20,55 @@ class EventType extends AbstractType
         $builder
             ->add('title', TextType::class, [
                 'label' => 'Titre de l\'événement',
-                'attr' => ['class' => 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground', 'placeholder' => 'Ex: LAN Party 2026']
+                'attr' => ['class' => 'form-input', 'placeholder' => 'Ex: LAN Party 2026']
             ])
-            ->add('category', ChoiceType::class, [
+            // Transformation en TextType + TomSelect
+            ->add('category', TextType::class, [
                 'label' => 'Catégorie',
-                'choices' => [
-                    'Tournoi E-sport' => 'Tournoi E-sport',
-                    'Convention' => 'Convention',
-                    'Jeux de Société' => 'Jeux de Société',
-                    'Conférence' => 'Conférence'
-                ],
-                'attr' => ['class' => 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground']
+                'attr' => [
+                    'class' => 'js-tom-select-text',
+                    'placeholder' => 'Sélectionnez ou créez une catégorie...',
+                    'data-options' => json_encode([
+                        'Tournoi E-sport',
+                        'Convention',
+                        'Jeux de Société',
+                        'Conférence'
+                    ])
+                ]
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description détaillée',
-                'attr' => ['class' => 'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground', 'rows' => 5]
+                'attr' => ['class' => 'form-textarea', 'rows' => 5]
             ])
             ->add('startAt', DateTimeType::class, [
                 'label' => 'Date de début',
                 'widget' => 'single_text',
                 'html5' => true,
-                'attr' => ['class' => 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground']
+                'attr' => ['class' => 'form-input']
             ])
             ->add('endAt', DateTimeType::class, [
                 'label' => 'Date de fin',
                 'widget' => 'single_text',
                 'html5' => true,
-                'attr' => ['class' => 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground']
+                'attr' => ['class' => 'form-input']
             ])
             ->add('location', TextType::class, [
                 'label' => 'Lieu',
                 'attr' => [
-                    'class' => 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground',
-                    'list' => 'locations-list',
-                    'placeholder' => 'Sélectionnez ou tapez un lieu'
+                    'class' => 'js-tom-select-text',
+                    'placeholder' => 'Sélectionnez ou écrivez un lieu...',
+                    'data-options' => json_encode([
+                        'Paris Expo Porte de Versailles',
+                        'Eurexpo Lyon',
+                        'Paris La Défense Arena',
+                        'Online / Discord',
+                        'Salle des fêtes locale'
+                    ])
                 ]
             ])
             ->add('capacity', IntegerType::class, [
                 'label' => 'Capacité max',
-                'attr' => ['class' => 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground']
+                'attr' => ['class' => 'form-input']
             ])
             ->add('imageFile', VichImageType::class, [
                 'label' => 'Image de couverture',

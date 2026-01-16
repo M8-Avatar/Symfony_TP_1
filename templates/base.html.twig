@@ -9,6 +9,8 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -18,9 +20,7 @@
                     padding: "2rem",
                 },
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
                         border: "hsl(var(--border))",
                         input: "hsl(var(--input))",
@@ -51,41 +51,60 @@
 
     <style>
         :root {
-            /* On force le thème Sombre (Dark Mode) par défaut pour GeekEvents */
             --background: 222.2 84% 4.9%;
             --foreground: 210 40% 98%;
-            
             --card: 222.2 84% 4.9%;
             --card-foreground: 210 40% 98%;
-            
             --popover: 222.2 84% 4.9%;
             --popover-foreground: 210 40% 98%;
-            
-            --primary: 217.2 91.2% 59.8%; /* Bleu Néon */
+            --primary: 217.2 91.2% 59.8%;
             --primary-foreground: 222.2 47.4% 11.2%;
-            
             --secondary: 217.2 32.6% 17.5%;
             --secondary-foreground: 210 40% 98%;
-            
             --muted: 217.2 32.6% 17.5%;
             --muted-foreground: 215 20.2% 65.1%;
-            
             --accent: 217.2 32.6% 17.5%;
             --accent-foreground: 210 40% 98%;
-            
             --destructive: 0 62.8% 30.6%;
             --destructive-foreground: 210 40% 98%;
-            
             --border: 217.2 32.6% 17.5%;
             --input: 217.2 32.6% 17.5%;
             --ring: 224.3 76.3% 48%;
-            
             --radius: 0.5rem;
         }
 
         body {
             background-color: hsl(var(--background));
             color: hsl(var(--foreground));
+        }
+
+        /* Override TomSelect Styles for Dark Mode */
+        .ts-control {
+            background-color: hsl(var(--input)) !important;
+            border-color: hsl(var(--border)) !important;
+            color: hsl(var(--foreground)) !important;
+            border-radius: var(--radius) !important;
+            padding: 0.5rem 0.75rem !important;
+            min-height: 2.5rem;
+        }
+        .ts-dropdown {
+            background-color: hsl(var(--card)) !important;
+            border-color: hsl(var(--border)) !important;
+            color: hsl(var(--card-foreground)) !important;
+            z-index: 50;
+        }
+        .ts-dropdown .option {
+            color: hsl(var(--foreground));
+        }
+        .ts-dropdown .option:hover, .ts-dropdown .active {
+            background-color: hsl(var(--primary)) !important;
+            color: hsl(var(--primary-foreground)) !important;
+        }
+        .ts-control input {
+            color: hsl(var(--foreground)) !important;
+        }
+        .ts-wrapper.single .ts-control:after {
+            border-color: #64748b transparent transparent transparent !important;
         }
     </style>
 </head>
@@ -112,7 +131,11 @@
 
                     {% if app.user %}
                         <a href="{{ path('app_user_profile') }}" class="transition-colors text-foreground/80 hover:text-primary relative group">
-                            Mon espace
+                            {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_ORGANIZER') %}
+                                Dashboard
+                            {% else %}
+                                Mon espace
+                            {% endif %}
                             <span class="absolute -bottom-6 left-0 w-full h-0.5 bg-primary scale-x-0 transition-transform group-hover:scale-x-100"></span>
                         </a>
                     {% endif %}
@@ -120,16 +143,26 @@
 
                 <div class="flex items-center gap-4 border-l border-white/10 pl-8">
                     {% if app.user %}
-                        <a href="{{ path('app_logout') }}" class="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-2 text-sm font-medium text-white hover:bg-white/10 transition-colors">
-                            Déconnexion
-                        </a>
+                        {% if app.request.attributes.get('_route') != 'app_user_profile' %}
+                            <a href="{{ path('app_user_profile') }}" class="flex items-center gap-2 group mr-2" title="Aller au profil">
+                                <div class="relative h-8 w-8">
+                                    {% if app.user.profile.imageName %}
+                                        <img src="{{ vich_uploader_asset(app.user.profile, 'imageFile') }}" class="h-full w-full rounded-full object-cover border border-white/20 group-hover:border-primary transition-colors">
+                                    {% elseif app.user.profile.avatarUrl %}
+                                        <img src="{{ app.user.profile.avatarUrl }}" class="h-full w-full rounded-full object-cover border border-white/20 group-hover:border-primary transition-colors">
+                                    {% else %}
+                                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ app.user.email }}" class="h-full w-full rounded-full object-cover border border-white/20 group-hover:border-primary transition-colors">
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm font-medium text-white group-hover:text-primary transition-colors hidden lg:block">
+                                    {{ app.user.profile.pseudo }}
+                                </span>
+                            </a>
+                        {% endif %}
+                        <a href="{{ path('app_logout') }}" class="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-2 text-sm font-medium text-white hover:bg-white/10 transition-colors">Déconnexion</a>
                     {% else %}
-                        <a href="{{ path('app_login') }}" class="text-sm font-medium text-muted-foreground hover:text-white transition-colors">
-                            Se connecter
-                        </a>
-                        <a href="{{ path('app_register') }}" class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-                            S'inscrire
-                        </a>
+                        <a href="{{ path('app_login') }}" class="text-sm font-medium text-muted-foreground hover:text-white transition-colors">Se connecter</a>
+                        <a href="{{ path('app_register') }}" class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">S'inscrire</a>
                     {% endif %}
                 </div>
             </div>
@@ -144,24 +177,67 @@
                         {% if label == 'success' %} bg-green-500/10 border-green-500/20 text-green-400 
                         {% elseif label == 'danger' or label == 'error' %} bg-red-500/10 border-red-500/20 text-red-400 
                         {% else %} bg-blue-500/10 border-blue-500/20 text-blue-400 {% endif %}">
-                        <div class="flex items-center gap-2">
-                            {{ message }}
-                        </div>
+                        <div class="flex items-center gap-2">{{ message }}</div>
                     </div>
                 {% endfor %}
             {% endfor %}
         </div>
-
         {% block body %}{% endblock %}
     </main>
 
-    <footer class="border-t border-border py-6 md:py-0">
-        <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-            <p class="text-center text-sm leading-loose text-muted-foreground md:text-left">
-                © 2026 GeekEvents. Construit avec Symfony & Passion.
-            </p>
+    <footer class="border-t border-white/10 bg-[#020617] py-8 mt-auto">
+        <div class="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row md:py-0">
+            <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+                <p class="text-center text-sm leading-loose text-muted-foreground md:text-left">
+                    &copy; {{ 'now'|date('Y') }} GeekEvents. Tous droits réservés.
+                </p>
+            </div>
+            <div class="flex gap-6 text-sm font-medium text-muted-foreground">
+                <a href="{{ path('app_mentions') }}" class="transition-colors hover:text-white hover:underline underline-offset-4">Mentions légales</a>
+                <a href="{{ path('app_contact') }}" class="transition-colors hover:text-white hover:underline underline-offset-4">Contact</a>
+            </div>
         </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            document.querySelectorAll('.js-tom-select-no-create').forEach((el) => {
+                new TomSelect(el, {
+                    create: false,
+                    sortField: { field: "text", direction: "asc" },
+                    controlInput: null
+                });
+            });
+
+            document.querySelectorAll('.js-tom-select-text').forEach((el) => {
+                let optionsData = [];
+                const rawOptions = el.getAttribute('data-options');
+                
+                if (rawOptions) {
+                    try {
+                        const parsed = JSON.parse(rawOptions);
+                        optionsData = parsed.map(item => ({ value: item, text: item }));
+                    } catch (e) { 
+                        console.error("Erreur parsing options TomSelect", e); 
+                    }
+                }
+
+                new TomSelect(el, {
+                    create: true,
+                    options: optionsData, 
+                    items: el.value ? [el.value] : [],
+                    valueField: 'value',
+                    labelField: 'text',
+                    searchField: 'text',
+                    placeholder: el.getAttribute('placeholder') || "Sélectionnez ou écrivez...",
+                    plugins: ['remove_button'],
+                    persist: false,
+                    maxItems: 1
+                });
+            });
+        });
+    </script>
 </body>
 </html>

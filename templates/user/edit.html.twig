@@ -3,33 +3,40 @@
 {% block title %}Modifier mon profil{% endblock %}
 
 {% block body %}
-<div class="container max-w-md py-10">
-    <div class="rounded-xl border border-white/10 bg-card p-8 shadow-lg">
-        <h1 class="text-2xl font-bold text-white mb-6 text-center">Modifier mon profil</h1>
+<div class="container max-w-2xl py-10">
+    <div class="rounded-xl border border-white/10 bg-[#0B1221] p-8 shadow-lg">
+        <h1 class="text-2xl font-bold text-white mb-8 border-b border-white/10 pb-4">Paramètres du compte</h1>
 
-        {{ form_start(form, {'attr': {'class': 'space-y-6'}}) }}
+        {{ form_start(form) }}
             
-            <div class="space-y-2">
-                {{ form_label(form.pseudo, null, {'label_attr': {'class': 'text-sm font-medium text-white'}}) }}
-                {{ form_widget(form.pseudo) }}
-                {{ form_errors(form.pseudo) }}
+            <h2 class="text-lg font-semibold text-blue-400 mb-4">Profil Public</h2>
+            
+            {{ form_row(form.profile.imageFile) }}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {{ form_row(form.profile.pseudo) }}
+                {{ form_row(form.profile.favoriteUniverse) }}
             </div>
 
-            <div class="space-y-2">
-                {{ form_label(form.favoriteUniverse, null, {'label_attr': {'class': 'text-sm font-medium text-white'}}) }}
-                {{ form_widget(form.favoriteUniverse) }}
+            {{ form_row(form.profile.bio) }}
+
+            <div class="pt-8 border-t border-white/10 mt-8">
+                <h2 class="text-lg font-semibold text-purple-400 mb-4">Sécurité & Connexion</h2>
+                
+                {{ form_row(form.email) }}
+                
+                <div class="p-4 border border-purple-500/20 bg-purple-500/5 rounded-lg mb-4">
+                    {{ form_row(form.plainPassword.first, {'label': 'Nouveau mot de passe'}) }}
+                    <p class="text-xs text-muted-foreground -mt-4 mb-4">Laissez vide pour conserver l'actuel.</p>
+                    {{ form_row(form.plainPassword.second, {'label': 'Confirmer le mot de passe'}) }}
+                </div>
             </div>
 
-            <div class="space-y-2">
-                {{ form_label(form.bio, null, {'label_attr': {'class': 'text-sm font-medium text-white'}}) }}
-                {{ form_widget(form.bio) }}
-            </div>
-
-            <div class="pt-4 flex gap-4">
-                <a href="{{ path('app_user_profile') }}" class="w-1/2 flex justify-center py-2 px-4 border border-input rounded-md shadow-sm text-sm font-medium text-white bg-transparent hover:bg-accent focus:outline-none">
+            <div class="pt-6 flex gap-4">
+                <a href="{{ path('app_user_profile') }}" class="w-1/2 flex justify-center py-2 px-4 border border-white/10 rounded-md text-sm font-medium text-gray-300 hover:bg-white/5 transition-colors">
                     Annuler
                 </a>
-                <button type="submit" class="w-1/2 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                <button type="submit" class="w-1/2 flex justify-center py-2 px-4 rounded-md text-sm font-medium text-white bg-primary hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
                     Enregistrer
                 </button>
             </div>

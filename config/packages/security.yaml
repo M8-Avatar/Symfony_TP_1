@@ -41,8 +41,12 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
+        # - { path: ^/admin, roles: ROLE_ORGANIZER } # Allow organizers to access admin area
         # - { path: ^/profile, roles: ROLE_USER }
+
+    role_hierarchy:
+        ROLE_ORGANIZER:   [ROLE_USER]
+        ROLE_ADMIN:       [ROLE_ORGANIZER, ROLE_ALLOWED_TO_SWITCH]
 
 when@test:
     security:

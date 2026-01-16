@@ -14,39 +14,49 @@
 
             <form method="post">
                 {% if error %}
-                    <div class="mb-4 p-3 rounded bg-red-900/30 border border-red-500/50 text-red-200 text-sm">
+                    {# Le message "Invalid credentials" sera remplacé par "Email ou mot de passe incorrect" grâce au fichier de traduction #}
+                    <div class="mb-4 p-3 rounded bg-red-900/30 border border-red-500/50 text-red-200 text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         {{ error.messageKey|trans(error.messageData, 'security') }}
                     </div>
                 {% endif %}
 
                 {% if app.user %}
-                    <div class="mb-4 text-sm text-muted-foreground">
-                        Vous êtes connecté en tant que {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}" class="text-primary hover:underline">Se déconnecter</a>
+                    <div class="mb-4 text-sm text-muted-foreground text-center">
+                        Vous êtes connecté en tant que <span class="font-bold text-white">{{ app.user.userIdentifier }}</span>. 
+                        <br>
+                        <a href="{{ path('app_logout') }}" class="text-primary hover:underline text-xs">Se déconnecter</a>
                     </div>
                 {% endif %}
 
                 <div class="space-y-4">
                     <div class="space-y-2">
-                        <label for="inputEmail" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
-                        <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="email@exemple.com" autocomplete="email" required autofocus>
+                        <label for="inputEmail" class="text-sm font-medium leading-none text-gray-200">Email</label>
+                        <input type="email" value="{{ last_username }}" name="email" id="inputEmail" 
+                               class="flex h-10 w-full rounded-md border border-white/10 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" 
+                               placeholder="email@exemple.com" autocomplete="email" required autofocus>
                     </div>
 
                     <div class="space-y-2">
-                        <label for="inputPassword" class="text-sm font-medium leading-none">Mot de passe</label>
-                        <input type="password" name="password" id="inputPassword" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" autocomplete="current-password" required>
+                        <div class="flex justify-between items-center">
+                            <label for="inputPassword" class="text-sm font-medium leading-none text-gray-200">Mot de passe</label>
+                        </div>
+                        <input type="password" name="password" id="inputPassword" 
+                               class="flex h-10 w-full rounded-md border border-white/10 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" 
+                               autocomplete="current-password" required>
                     </div>
 
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-                    <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full">
+                    <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-bold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-white hover:bg-primary/90 h-10 px-4 py-2 w-full mt-4">
                         Se connecter
                     </button>
                 </div>
             </form>
 
-            <div class="mt-4 text-center text-sm">
+            <div class="mt-6 text-center text-sm text-muted-foreground">
                 Pas encore de compte ? 
-                <a href="{{ path('app_register') }}" class="text-primary hover:underline font-medium">S'inscrire</a>
+                <a href="{{ path('app_register') }}" class="text-primary hover:text-primary/80 font-medium hover:underline">S'inscrire</a>
             </div>
         </div>
     </div>

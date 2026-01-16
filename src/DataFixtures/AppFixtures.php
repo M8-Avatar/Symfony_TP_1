@@ -4,7 +4,9 @@ namespace App\DataFixtures;
 
 use App\Entity\BoardGameActivity;
 use App\Entity\Event;
+use App\Entity\Intervenant;
 use App\Entity\Profile;
+use App\Entity\Registration;
 use App\Entity\TournamentActivity;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -23,127 +25,149 @@ class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        // Utilisation de Faker en français
         $faker = Factory::create('fr_FR');
 
-        // Tableaux pour stocker les objets et faire des relations
+        // --- 1. UTILISATEURS ---
         $users = [];
-        $events = [];
+        $organizers = [];
 
-        // 1️⃣ CRÉATION DE L'ADMIN (ORGANISATEUR)
+        // A. Super Admin
         $admin = new User();
         $admin->setEmail('admin@geekevents.com');
+        $admin->setRoles(['ROLE_ADMIN']);
         $admin->setPassword($this->hasher->hashPassword($admin, 'password'));
-        $admin->setRoles(['ROLE_ORGANIZER']);
         
-        // Note: Si tu n'as pas de setCreatedAt, il faudra peut-être l'ajouter dans l'entité User, 
-        // ou le gérer dans le constructeur de l'entité. 
-        // Par défaut make:entity le génère souvent.
-        if (method_exists($admin, 'setCreatedAt')) {
-            $admin->setCreatedAt(new \DateTimeImmutable());
+        $profileAdmin = new Profile();
+        $profileAdmin->setPseudo('AdminGeek');
+        $profileAdmin->setBio('Le maître du donjon.');
+        $admin->setProfile($profileAdmin);
+        
+        $manager->persist($admin);
+
+        // B. Organisateurs (5)
+        for ($i = 0; $i < 5; $i++) {
+            $org = new User();
+            $org->setEmail('organizer' . $i . '@geekevents.com');
+            $org->setRoles(['ROLE_ORGANIZER']);
+            $org->setPassword($this->hasher->hashPassword($org, 'password'));
+            
+            $profileOrg = new Profile();
+            $profileOrg->setPseudo($faker->userName());
+            $profileOrg->setBio($faker->sentence());
+            $org->setProfile($profileOrg);
+
+            $manager->persist($org);
+            $organizers[] = $org;
         }
 
-        // Profil de l'admin
-        $adminProfile = new Profile();
-        $adminProfile->setPseudo('AdminGeek');
-        $adminProfile->setBio('Administrateur suprême de GeekEvents.');
-        $adminProfile->setFavoriteUniverse('Matrix');
-        $adminProfile->setAvatarUrl('https://api.dicebear.com/7.x/avataaars/svg?seed=Admin');
-        
-        // Liaison
-        $admin->setProfile($adminProfile);
-        $adminProfile->setUser($admin);
-
-        $manager->persist($admin);
-        $manager->persist($adminProfile);
-        $users[] = $admin;
-
-        // 2️⃣ CRÉATION DE 20 UTILISATEURS (PARTICIPANTS)
-        for ($i = 0; $i < 20; $i++) {
+        // C. Utilisateurs classiques (30)
+        for ($i = 0; $i < 30; $i++) {
             $user = new User();
-            $user->setEmail($faker->unique()->email());
-            $user->setPassword($this->hasher->hashPassword($user, 'password'));
+            $user->setEmail($faker->email());
             $user->setRoles(['ROLE_USER']);
-            
-            if (method_exists($user, 'setCreatedAt')) {
-                $user->setCreatedAt(\DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-1 year', 'now')));
-            }
+            $user->setPassword($this->hasher->hashPassword($user, 'password'));
 
-            $profile = new Profile();
-            $profile->setPseudo($faker->userName());
-            $profile->setBio($faker->sentence(10));
-            $profile->setFavoriteUniverse($faker->randomElement(['Star Wars', 'Marvel', 'Manga', 'Warhammer', 'Nintendo']));
-            $profile->setAvatarUrl('https://api.dicebear.com/7.x/avataaars/svg?seed=' . $user->getEmail());
-
-            $user->setProfile($profile);
-            $profile->setUser($user);
+            $profileUser = new Profile();
+            $profileUser->setPseudo($faker->userName());
+            $profileUser->setFavoriteUniverse($faker->randomElement(['Marvel', 'Star Wars', 'Manga', 'Warhammer', 'Zelda']));
+            $user->setProfile($profileUser);
 
             $manager->persist($user);
-            $manager->persist($profile);
             $users[] = $user;
         }
 
-        // 3️⃣ CRÉATION DE 10 ÉVÉNEMENTS
-        $eventCategories = ['Convention', 'Tournoi E-sport', 'Soirée Jeux', 'Conférence'];
-        $locations = ['Paris Expo', 'Eurexpo Lyon', 'Accor Arena', 'Salle des fêtes de Trifouilly'];
+        // --- 2. INTERVENANTS (10) ---
+        $intervenants = [];
+        for ($i = 0; $i < 10; $i++) {
+            $intervenant = new Intervenant();
+            $intervenant->setName($faker->name());
+            $intervenant->setBio($faker->paragraph(2));
+            
+            $manager->persist($intervenant);
+            $intervenants[] = $intervenant;
+        }
 
-        for ($j = 0; $j < 10; $j++) {
+        // --- 3. ÉVÉNEMENTS (20) ---
+        $categories = ['Tournoi E-sport', 'Convention', 'Jeux de Société', 'Conférence', 'Cosplay'];
+        $locations = ['Paris Expo', 'Eurexpo Lyon', 'Salle des fêtes locale', 'Discord / Online'];
+
+        for ($i = 0; $i < 20; $i++) {
             $event = new Event();
-            $event->setTitle($faker->sentence(3, true));
-            $event->setDescription($faker->paragraph(3));
+            $event->setOrganizer($faker->randomElement($organizers));
+            $event->setTitle($faker->sentence(3));
+            $event->setDescription($faker->paragraph(5));
+            $event->setCategory($faker->randomElement($categories));
+            $event->setLocation($faker->randomElement($locations));
+            $event->setCapacity($faker->numberBetween(20, 500));
             
-            $startDate = $faker->dateTimeBetween('now', '+1 year');
-            $event->setStartAt($startDate);
-            // Clone pour ne pas modifier la date de début
-            $endDate = (clone $startDate)->modify('+' . rand(1, 3) . ' days');
-            $event->setEndAt($endDate);
+            // CORRECTION ICI : On utilise directement les objets DateTime de Faker (Mutable)
+            $startAt = $faker->dateTimeBetween('-2 months', '+6 months');
+            $endAt = (clone $startAt)->modify('+' . $faker->numberBetween(1, 3) . ' days');
             
-            $event->setCapacity($faker->numberBetween(50, 5000));
-            $event->setCategory($faker->randomElement($eventCategories)); // Assure-toi d'avoir ce champ dans Event
-            $event->setLocation($faker->randomElement($locations));       // Assure-toi d'avoir ce champ dans Event
-            
-            $event->setOrganizer($faker->randomElement($users));
+            $event->setStartAt($startAt);
+            $event->setEndAt($endAt);
+
+            // Ajouter des intervenants aléatoires
+            $randomIntervenants = $faker->randomElements($intervenants, $faker->numberBetween(0, 3));
+            foreach ($randomIntervenants as $inv) {
+                $event->addIntervenant($inv);
+            }
 
             $manager->persist($event);
-            $events[] = $event;
 
-            // 4️⃣ CRÉATION DES ACTIVITÉS
-            $nbActivities = rand(2, 5);
-            
-            for ($k = 0; $k < $nbActivities; $k++) {
+            // --- 4. ACTIVITÉS (1 à 4 par event) ---
+            $numActivities = $faker->numberBetween(1, 4);
+            for ($j = 0; $j < $numActivities; $j++) {
+                
                 if ($faker->boolean(50)) {
-                    // TOURNAMENT
+                    // Tournoi
                     $activity = new TournamentActivity();
-                    $activity->setGame($faker->randomElement(['League of Legends', 'CS:GO', 'Valorant', 'Smash Bros']));
+                    $activity->setGame($faker->randomElement(['League of Legends', 'Valorant', 'Smash Bros', 'FIFA']));
                     $activity->setPlatform($faker->randomElement(['PC', 'PS5', 'Switch']));
                     $activity->setFormat($faker->randomElement(['1v1', '5v5', 'Battle Royale']));
-                    $activity->setRules("Fair-play obligatoire.");
+                    $activity->setRules("Règles officielles v" . $faker->randomDigit());
                 } else {
-                    // BOARD GAME
+                    // Jeu de plateau
                     $activity = new BoardGameActivity();
-                    $activity->setGameName($faker->randomElement(['Catan', 'Dixit', '7 Wonders', 'Dungeons & Dragons']));
+                    $activity->setGameName($faker->randomElement(['Catan', 'Dune Imperium', '7 Wonders', 'Ark Nova']));
                     $activity->setMinPlayers(2);
-                    $activity->setMaxPlayers($faker->numberBetween(4, 10));
+                    $activity->setMaxPlayers(6);
                     $activity->setComplexityLevel($faker->randomElement(['Facile', 'Moyen', 'Expert']));
                 }
 
-                // Champs communs
-                $activity->setTitle($faker->words(3, true));
-                $activity->setDescription($faker->text(100));
-                
-                $actStart = (clone $startDate)->modify('+' . rand(1, 10) . ' hours');
-                $activity->setStartAt($actStart);
-                
-                $activity->setRoom('Salle ' . $faker->randomLetter() . $faker->numberBetween(1, 10));
                 $activity->setEvent($event);
+                $activity->setTitle($faker->words(3, true));
+                $activity->setDescription($faker->paragraph(1));
+                $activity->setRoom('Salle ' . $faker->randomLetter() . $faker->randomDigit());
+                
+                // CORRECTION ICI : Date de l'activité
+                $actStart = (clone $startAt)->modify('+' . $faker->numberBetween(1, 10) . ' hours');
+                $activity->setStartAt($actStart);
 
-                // Participants
-                $randomParticipants = $faker->randomElements($users, rand(0, 10));
-                foreach ($randomParticipants as $participant) {
-                    $activity->addParticipant($participant);
+                // Inscrire quelques users aux activités
+                $randomParticipants = $faker->randomElements($users, $faker->numberBetween(0, 5));
+                foreach ($randomParticipants as $p) {
+                    $activity->addParticipant($p);
                 }
 
                 $manager->persist($activity);
+            }
+
+            // --- 5. INSCRIPTIONS GLOBALES ---
+            $randomRegistrants = $faker->randomElements($users, $faker->numberBetween(5, 15));
+            foreach ($randomRegistrants as $registrant) {
+                $registration = new Registration();
+                $registration->setUser($registrant);
+                $registration->setEvent($event);
+                
+                // CORRECTION ICI : Date d'inscription
+                // On s'assure que la date d'inscription est valide (DateTime ou DateTimeImmutable selon ton entité Registration)
+                // Par sécurité, on envoie un DateTimeImmutable ici si ton entité Registration l'exige (souvent le cas pour created_at/registered_at)
+                // Si ça plante ici, change en DateTime simple.
+                // Essayons d'abord DateTimeImmutable car c'est souvent le défaut pour les timestamps
+                $registration->setRegisteredAt(\DateTimeImmutable::createFromMutable($faker->dateTimeBetween('-1 month', 'now')));
+                
+                $manager->persist($registration);
             }
         }
 

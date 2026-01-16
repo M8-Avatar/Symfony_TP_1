@@ -1,0 +1,56 @@
+{% use 'form_div_layout.html.twig' %}
+
+{# --- WIDGETS (Les champs input, textarea, select...) --- #}
+
+{% block form_widget_simple %}
+    {% set attr = attr|merge({'class': (attr.class|default('') ~ ' flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50')|trim}) %}
+    {{ parent() }}
+{% endblock form_widget_simple %}
+
+{% block textarea_widget %}
+    {% set attr = attr|merge({'class': (attr.class|default('') ~ ' flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50')|trim}) %}
+    {{ parent() }}
+{% endblock textarea_widget %}
+
+{% block choice_widget_collapsed %}
+    {% set attr = attr|merge({'class': (attr.class|default('') ~ ' flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1')|trim}) %}
+    {{ parent() }}
+{% endblock choice_widget_collapsed %}
+
+{# --- LABELS (Les titres des champs) --- #}
+
+{% block form_label %}
+    {% set label_attr = label_attr|merge({'class': (label_attr.class|default('') ~ ' text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-200 mb-2 block')|trim}) %}
+    {{ parent() }}
+{% endblock form_label %}
+
+{# --- ROWS (Le conteneur Champ + Label + Erreur) --- #}
+
+{% block form_row %}
+    <div class="mb-6">
+        {{ form_label(form) }}
+        {{ form_widget(form) }}
+        {{ form_help(form) }}
+        {{ form_errors(form) }}
+    </div>
+{% endblock form_row %}
+
+{# --- ERRORS (Les messages rouges) --- #}
+
+{% block form_errors %}
+    {% if errors|length > 0 %}
+        <ul class="mt-1 text-sm text-red-500 font-medium list-disc pl-4">
+            {% for error in errors %}
+                <li>{{ error.message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock form_errors %}
+
+{# --- HELP (Le petit texte d'aide sous le champ) --- #}
+
+{% block form_help %}
+    {% if help is not empty %}
+        <p class="mt-1 text-xs text-muted-foreground">{{ help|trans({}, translation_domain)|raw }}</p>
+    {% endif %}
+{% endblock form_help %}

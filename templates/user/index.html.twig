@@ -5,11 +5,25 @@
 {% block body %}
 <div class="container py-10 space-y-12">
     
+    {# En-tête profil #}
     <div class="flex items-center justify-between border-b border-white/10 pb-6">
         <div class="flex items-center gap-4">
-            <img src="{{ user.profile.avatarUrl ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=' ~ user.email }}" 
-                 alt="Avatar" 
-                 class="w-16 h-16 rounded-full border-2 border-primary bg-muted object-cover">
+            <div class="relative h-16 w-16">
+                {% if user.profile.imageName %}
+                    <img src="{{ vich_uploader_asset(user.profile, 'imageFile') }}" 
+                         alt="Avatar" 
+                         class="h-full w-full rounded-full border-2 border-primary bg-muted object-cover">
+                {% elseif user.profile.avatarUrl %}
+                    <img src="{{ user.profile.avatarUrl }}" 
+                         alt="Avatar" 
+                         class="h-full w-full rounded-full border-2 border-primary bg-muted object-cover">
+                {% else %}
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ user.email }}" 
+                         alt="Avatar" 
+                         class="h-full w-full rounded-full border-2 border-primary bg-muted object-cover">
+                {% endif %}
+            </div>
+
             <div>
                 <h1 class="text-2xl font-bold text-white">Bonjour, {{ user.profile.pseudo }}</h1>
                 <p class="text-muted-foreground text-sm">{{ user.email }}</p>
@@ -22,6 +36,47 @@
 
     {% if is_granted('ROLE_ORGANIZER') and organizerData is not empty %}
         
+        {# === SECTION COMPTE À REBOURS (NOUVEAU) === #}
+        {% if organizerData.nextEvent %}
+            {% set next = organizerData.nextEvent %}
+            <section class="relative overflow-hidden rounded-2xl border border-primary/30 bg-[#0B1221] p-8 shadow-[0_0_40px_rgba(59,130,246,0.1)]">
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 h-32 w-32 rounded-full bg-primary/10 blur-3xl"></div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold mb-3 border border-primary/30 animate-pulse">
+                            PROCHAIN ÉVÉNEMENT
+                        </span>
+                        <h2 class="text-3xl font-bold text-white mb-2">{{ next.title }}</h2>
+                        <div class="flex items-center gap-4 text-muted-foreground">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                {{ next.startAt|date('d M Y à H:i') }}
+                            </span>
+                            <span class="flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                {{ next.location }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {# LE COMPTEUR #}
+                    <div id="countdown-timer" data-date="{{ next.startAt|date('Y-m-d H:i:s') }}" class="flex gap-4">
+                        <div class="text-center"><div class="bg-white/5 border border-white/10 rounded-lg p-3 w-16 md:w-20"><span class="block text-2xl md:text-3xl font-bold text-white" id="d">00</span></div><span class="text-xs text-muted-foreground mt-1 block">Jours</span></div>
+                        <div class="text-center"><div class="bg-white/5 border border-white/10 rounded-lg p-3 w-16 md:w-20"><span class="block text-2xl md:text-3xl font-bold text-white" id="h">00</span></div><span class="text-xs text-muted-foreground mt-1 block">Heures</span></div>
+                        <div class="text-center"><div class="bg-white/5 border border-white/10 rounded-lg p-3 w-16 md:w-20"><span class="block text-2xl md:text-3xl font-bold text-primary" id="m">00</span></div><span class="text-xs text-muted-foreground mt-1 block">Min</span></div>
+                        <div class="text-center"><div class="bg-white/5 border border-white/10 rounded-lg p-3 w-16 md:w-20"><span class="block text-2xl md:text-3xl font-bold text-primary" id="s">00</span></div><span class="text-xs text-muted-foreground mt-1 block">Sec</span></div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end">
+                    <a href="{{ path('app_event_show', {id: next.id}) }}" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-md font-medium transition-colors">
+                        Gérer l'événement
+                    </a>
+                </div>
+            </section>
+        {% endif %}
+
         <section>
             <h2 class="text-2xl font-bold text-white mb-6 border-b-2 border-primary inline-block pb-1">Actions rapides</h2>
             
@@ -33,18 +88,18 @@
                     <span class="font-medium text-white">Gérer mes événements</span>
                 </a>
 
-                <a href="#created-events" class="group flex flex-col items-center justify-center p-8 rounded-xl border border-white/10 bg-[#0B1221] hover:border-purple-500/50 hover:bg-purple-500/5 transition-all cursor-pointer">
+                <a href="{{ path('app_organizer_activity_list') }}" class="group flex flex-col items-center justify-center p-8 rounded-xl border border-white/10 bg-[#0B1221] hover:border-purple-500/50 hover:bg-purple-500/5 transition-all cursor-pointer">
                     <div class="h-14 w-14 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(168,85,247,0.2)]">
                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
-                    <span class="font-medium text-white">Ajouter une activité</span>
+                    <span class="font-medium text-white">Gérer mes Activités</span>
                 </a>
 
-                <a href="#created-events" class="group flex flex-col items-center justify-center p-8 rounded-xl border border-white/10 bg-[#0B1221] hover:border-yellow-500/50 hover:bg-yellow-500/5 transition-all cursor-pointer">
-                    <div class="h-14 w-14 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(234,179,8,0.2)]">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <a href="{{ path('app_intervenant_index') }}" class="group flex flex-col items-center justify-center p-8 rounded-xl border border-white/10 bg-[#0B1221] hover:border-green-500/50 hover:bg-green-500/5 transition-all cursor-pointer">
+                    <div class="h-14 w-14 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(34,197,94,0.2)]">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
                     </div>
-                    <span class="font-medium text-white">Voir mes événements</span>
+                    <span class="font-medium text-white">Gérer les intervenants</span>
                 </a>
 
                 <a href="{{ path('app_organizer_participant_list') }}" class="group flex flex-col items-center justify-center p-8 rounded-xl border border-white/10 bg-[#0B1221] hover:border-orange-500/50 hover:bg-orange-500/5 transition-all cursor-pointer">
@@ -56,38 +111,41 @@
             </div>
         </section>
 
+        {# ... Le reste du code existant (Intervenants, Activités, Events créés) ... #}
+        
         <section>
             <h2 class="text-2xl font-bold text-white mb-6 border-b-2 border-primary inline-block pb-1">Intervenants associés</h2>
-            
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {% for person in organizerData.intervenants %}
                     <div class="flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-[#0B1221] hover:bg-white/5 transition-colors">
-                        <div class="relative">
-                             <img src="{{ person.profile.avatarUrl ?? 'https://api.dicebear.com/7.x/avataaars/svg?seed=' ~ person.email }}" 
-                                 alt="{{ person.profile.pseudo }}" 
-                                 class="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold object-cover">
+                        <div class="relative h-16 w-16 flex-shrink-0">
+                            {% if person.imageName %}
+                                <img src="{{ vich_uploader_asset(person, 'imageFile') }}" class="h-full w-full rounded-full border-2 border-primary bg-muted object-cover">
+                            {% else %}
+                                <div class="h-full w-full rounded-full border-2 border-primary bg-primary/20 flex items-center justify-center text-primary font-bold text-xl">
+                                    {{ person.name|first }}
+                                </div>
+                            {% endif %}
                         </div>
                         <div>
-                            <div class="font-semibold text-white">{{ person.profile.pseudo }}</div>
+                            <div class="font-semibold text-white">{{ person.name }}</div>
                             <div class="text-xs text-muted-foreground flex items-center gap-1">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                Participant actif
+                                {{ person.bio ? person.bio|slice(0, 30) ~ '...' : 'Intervenant' }}
                             </div>
                         </div>
                     </div>
                 {% else %}
-                    <p class="text-muted-foreground col-span-3">Aucun participant inscrit pour le moment.</p>
+                    <p class="text-muted-foreground col-span-3">Aucun intervenant associé pour le moment.</p>
                 {% endfor %}
             </div>
         </section>
 
         <section>
             <h2 class="text-2xl font-bold text-white mb-6 border-b-2 border-primary inline-block pb-1">Activités à venir</h2>
-            
             <div class="space-y-4">
                 {% for activity in organizerData.upcomingActivities %}
                     <div class="flex flex-col md:flex-row md:items-center justify-between p-5 rounded-xl border border-white/10 bg-[#0B1221] hover:border-white/20 transition-all gap-4">
-                        
                         <div class="flex items-start gap-4">
                             <div class="h-12 w-12 rounded-xl flex-shrink-0 flex items-center justify-center border border-white/10 bg-white/5 text-blue-400">
                                 {% if activity.discr == 'tournament' %}
@@ -96,44 +154,19 @@
                                     <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><circle cx="12" cy="16" r="1"/></svg>
                                 {% endif %}
                             </div>
-                            
                             <div>
                                 <h3 class="text-lg font-semibold text-white">{{ activity.title }}</h3>
                                 <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-400 mt-1">
-                                    <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border
-                                        {% if activity.discr == 'tournament' %} border-blue-500/30 bg-blue-500/10 text-blue-400 {% else %} border-orange-500/30 bg-orange-500/10 text-orange-400 {% endif %}">
+                                    <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border {{ activity.discr == 'tournament' ? 'border-blue-500/30 bg-blue-500/10 text-blue-400' : 'border-orange-500/30 bg-orange-500/10 text-orange-400' }}">
                                         {{ activity.discr == 'tournament' ? 'TOURNOI' : 'JEU DE SOCIÉTÉ' }}
                                     </span>
-                                    
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                                        {{ activity.startAt|date('d M Y') }}
-                                    </span>
-                                    
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                        {{ activity.startAt|date('H:i') }} - {{ activity.startAt|date_modify('+2 hours')|date('H:i') }}
-                                    </span>
-
-                                    <span class="text-muted-foreground hidden lg:inline-block">
-                                        {{ activity.event.title }}
-                                    </span>
+                                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> {{ activity.startAt|date('d M Y') }}</span>
+                                    <span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> {{ activity.startAt|date('H:i') }}</span>
                                 </div>
                             </div>
                         </div>
-
                         <div class="flex items-center gap-4 self-end md:self-center w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/10 pt-4 md:pt-0 mt-2 md:mt-0">
-                            <div class="text-right mr-4">
-                                {% set places = activity.participants|length %}
-                                {% set total = 32 %}
-                                <div class="text-sm font-medium text-white">{{ places }} places</div>
-                                <div class="text-xs text-muted-foreground">/ {{ total }} total</div>
-                            </div>
-                            
-                            <a href="{{ path('app_event_show', {'id': activity.event.id}) }}" class="px-4 py-2 rounded-lg border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 text-sm font-medium transition-colors flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                Gérer
-                            </a>
+                            <a href="{{ path('app_event_show', {'id': activity.event.id}) }}" class="px-4 py-2 rounded-lg border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 text-sm font-medium transition-colors flex items-center gap-2">Gérer</a>
                         </div>
                     </div>
                 {% else %}
@@ -149,7 +182,7 @@
                     <a href="{{ path('app_event_show', {'id': event.id}) }}" class="group block rounded-xl border border-white/10 bg-[#0B1221] overflow-hidden hover:border-blue-500/50 transition-all">
                         <div class="relative h-40 w-full bg-muted">
                             {% if event.imageName %}
-                                <img src="{{ vich_uploader_asset(event, 'imageFile') }}" class="h-full w-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" alt="Cover">
+                                <img src="{{ vich_uploader_asset(event, 'imageFile') }}" class="h-full w-full object-cover opacity-70 group-hover:opacity-100 transition-opacity">
                             {% else %}
                                 <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800" class="h-full w-full object-cover opacity-70" alt="Defaut">
                             {% endif %}
@@ -161,7 +194,6 @@
                             <h4 class="font-bold text-white truncate text-lg group-hover:text-blue-400 transition-colors">{{ event.title }}</h4>
                             <p class="text-sm text-gray-400 mt-1 flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                {# 👇 ICI : On utilise registrations au lieu de participants #}
                                 {{ event.registrations|length }} participants
                             </p>
                         </div>
@@ -172,12 +204,12 @@
 
     {% endif %}
 
+    {# Section Billets inchangée (garde ton code existant ici) #}
     <div class="space-y-6 pt-8 border-t border-white/10">
         <h2 class="text-2xl font-bold text-white flex items-center gap-2">
             <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 5v2"/><path d="M15 11v2"/><path d="M15 17v2"/><path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2Z"/></svg>
             Mes Billets & Inscriptions
         </h2>
-
         {% if participations is empty %}
             <div class="text-center py-12 border border-dashed border-white/10 rounded-xl bg-card/30">
                 <p class="text-muted-foreground text-lg">Vous n'êtes inscrit à aucun événement.</p>
@@ -185,37 +217,26 @@
             </div>
         {% else %}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {# 👇 ICI : J'ai remis la boucle FOR qui avait disparu #}
                 {% for registration in participations %}
                     {% set event = registration.event %}
-                    
                     <div class="group rounded-xl border border-white/10 bg-[#0B1221] text-card-foreground shadow-sm overflow-hidden hover:border-green-500/50 transition-all">
                         <a href="{{ path('app_event_show', {'id': event.id}) }}" class="block relative h-40 w-full overflow-hidden bg-muted">
                             {% if event.imageName %}
-                                <img src="{{ vich_uploader_asset(event, 'imageFile') }}" class="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="{{ event.title }}">
+                                <img src="{{ vich_uploader_asset(event, 'imageFile') }}" class="h-full w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
                             {% else %}
                                 <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800" class="h-full w-full object-cover opacity-80" alt="Defaut">
                             {% endif %}
                             <div class="absolute top-2 right-2">
-                                <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-green-500 text-white shadow-sm">
-                                    Billet Validé
-                                </span>
+                                <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded bg-green-500 text-white shadow-sm">Billet Validé</span>
                             </div>
                         </a>
                         <div class="p-5 space-y-3">
-                            <a href="{{ path('app_event_show', {'id': event.id}) }}" class="block font-bold text-lg leading-none text-white group-hover:text-green-400 transition-colors">
-                                {{ event.title }}
-                            </a>
+                            <a href="{{ path('app_event_show', {'id': event.id}) }}" class="block font-bold text-lg leading-none text-white group-hover:text-green-400 transition-colors">{{ event.title }}</a>
                             <div class="space-y-1 text-sm text-gray-400">
                                 <div>📅 {{ event.startAt|date('d/m/Y') }}</div>
                                 <div>📍 {{ event.location }}</div>
-                                <div class="text-xs text-muted-foreground mt-2">
-                                    Inscrit le : {{ registration.registeredAt|date('d/m/Y') }}
-                                </div>
                             </div>
-                            <a href="{{ path('app_event_register', {'id': event.id}) }}" class="block w-full text-center text-xs text-red-400 hover:text-red-300 hover:underline mt-2">
-                                Annuler ma venue
-                            </a>
+                            <a href="{{ path('app_event_register', {'id': event.id}) }}" class="block w-full text-center text-xs text-red-400 hover:text-red-300 hover:underline mt-2">Annuler ma venue</a>
                         </div>
                     </div>
                 {% endfor %}
@@ -224,4 +245,32 @@
     </div>
 
 </div>
+
+{# SCRIPT JS POUR LE COMPTEUR #}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const timerContainer = document.getElementById('countdown-timer');
+        if (timerContainer) {
+            const targetDate = new Date(timerContainer.dataset.date).getTime();
+            const updateTimer = () => {
+                const now = new Date().getTime();
+                const distance = targetDate - now;
+                if (distance < 0) {
+                    timerContainer.innerHTML = '<div class="text-xl font-bold text-green-500">L\'événement a commencé !</div>';
+                    return;
+                }
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                document.getElementById('d').innerText = days < 10 ? '0' + days : days;
+                document.getElementById('h').innerText = hours < 10 ? '0' + hours : hours;
+                document.getElementById('m').innerText = minutes < 10 ? '0' + minutes : minutes;
+                document.getElementById('s').innerText = seconds < 10 ? '0' + seconds : seconds;
+            };
+            setInterval(updateTimer, 1000);
+            updateTimer(); 
+        }
+    });
+</script>
 {% endblock %}

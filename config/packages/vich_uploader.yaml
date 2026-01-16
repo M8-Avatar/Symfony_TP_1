@@ -8,3 +8,13 @@ vich_uploader:
             inject_on_load: false
             delete_on_update: true
             delete_on_remove: true
+
+        profile_images:
+            uri_prefix: /uploads/profiles
+            upload_destination: '%kernel.project_dir%/public/uploads/profiles'
+            namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+
+        intervenant_images:
+            uri_prefix: /uploads/intervenants
+            upload_destination: '%kernel.project_dir%/public/uploads/intervenants'
+            namer: Vich\UploaderBundle\Naming\SmartUniqueNamer

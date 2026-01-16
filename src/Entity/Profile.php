@@ -5,8 +5,11 @@ namespace App\Entity;
 use App\Repository\ProfileRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\HttpFoundation\File\File;
+use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 #[ORM\Entity(repositoryClass: ProfileRepository::class)]
+#[Vich\Uploadable]
 class Profile
 {
     #[ORM\Id]
@@ -14,6 +17,17 @@ class Profile
     #[ORM\Column]
     private ?int $id = null;
 
+    // --- VICH UPLOADER ---
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $imageName = null;
+
+    #[Vich\UploadableField(mapping: 'profile_images', fileNameProperty: 'imageName')]
+    private ?File $imageFile = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
+
+    // --- AUTRES CHAMPS ---
     #[ORM\Column(length: 255)]
     private ?string $pseudo = null;
 
@@ -28,6 +42,53 @@ class Profile
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $favoriteUniverse = null;
+
+    public function __serialize(): array
+    {
+        return [
+            'id' => $this->id,
+            'pseudo' => $this->pseudo,
+            'bio' => $this->bio,
+            'avatarUrl' => $this->avatarUrl,
+            'imageName' => $this->imageName,
+            'favoriteUniverse' => $this->favoriteUniverse,
+            'updatedAt' => $this->updatedAt,
+        ];
+    }
+
+    public function __unserialize(array $data): void
+    {
+        $this->id = $data['id'] ?? null;
+        $this->pseudo = $data['pseudo'] ?? null;
+        $this->bio = $data['bio'] ?? null;
+        $this->avatarUrl = $data['avatarUrl'] ?? null;
+        $this->imageName = $data['imageName'] ?? null;
+        $this->favoriteUniverse = $data['favoriteUniverse'] ?? null;
+        $this->updatedAt = $data['updatedAt'] ?? null;
+    }
+
+    public function setImageFile(?File $imageFile = null): void
+    {
+        $this->imageFile = $imageFile;
+        if (null !== $imageFile) {
+            $this->updatedAt = new \DateTimeImmutable();
+        }
+    }
+
+    public function getImageFile(): ?File
+    {
+        return $this->imageFile;
+    }
+
+    public function setImageName(?string $imageName): void
+    {
+        $this->imageName = $imageName;
+    }
+
+    public function getImageName(): ?string
+    {
+        return $this->imageName;
+    }
 
     public function getId(): ?int
     {
@@ -77,11 +138,9 @@ class Profile
 
     public function setUser(User $user): static
     {
-        // set the owning side of the relation if necessary
         if ($user->getProfile() !== $this) {
             $user->setProfile($this);
         }
-
         $this->user = $user;
 
         return $this;

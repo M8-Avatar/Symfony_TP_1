@@ -16,7 +16,7 @@ class EventController extends AbstractController
 {
     #[Route('/event/{id}', name: 'app_event_show')]
     public function show(Event $event): Response
-    {   
+    {
         return $this->render('event/show.html.twig', [
             'event' => $event,
         ]);
@@ -39,6 +39,7 @@ class EventController extends AbstractController
         ]);
 
         if ($existingRegistration) {
+            // --- DÉSINSCRIPTION ---
             $entityManager->remove($existingRegistration);
             
             foreach ($event->getActivities() as $activity) {
@@ -49,11 +50,19 @@ class EventController extends AbstractController
             
             $this->addFlash('warning', 'Désinscription effectuée.');
         } else {
-
+            // --- INSCRIPTION ---
+            
+            // 1. Vérification de la capacité
             if ($event->getRegistrations()->count() >= $event->getCapacity()) {
-                $this->addFlash('danger', 'Désolé, cet événement est complet !');
-                return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+                $this->addFlash('danger', 'Désolé, cet événement est complet ! Impossible de s\'inscrire.');
+                
+                // 👇 CORRECTION : Redirige vers la section détails/capacité
+                return $this->redirectToRoute('app_event_show', [
+                    'id' => $event->getId(),
+                    '_fragment' => 'details-pratiques' // Assure-toi d'avoir un ID correspondant dans ta vue
+                ]);
             }
+
             $registration = new Registration();
             $registration->setEvent($event);
             $registration->setUser($user);
@@ -65,7 +74,11 @@ class EventController extends AbstractController
 
         $entityManager->flush();
 
-        return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+        // 👇 CORRECTION : Retourne à la page sans remonter tout en haut (utile pour voir la jauge)
+        return $this->redirectToRoute('app_event_show', [
+            'id' => $event->getId(),
+            '_fragment' => 'details-pratiques' // Optionnel, cible la section jauge
+        ]);
     }
 
     #[Route('/activity/{id}/join', name: 'app_activity_join')]
@@ -93,6 +106,9 @@ class EventController extends AbstractController
 
         $entityManager->flush();
 
-        return $this->redirectToRoute('app_event_show', ['id' => $event->getId()]);
+        return $this->redirectToRoute('app_event_show', [
+            'id' => $event->getId(),
+            '_fragment' => 'programme' 
+        ]);
     }
 }

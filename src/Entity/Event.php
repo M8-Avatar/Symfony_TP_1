@@ -14,6 +14,10 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
 #[Vich\Uploadable]
 class Event
 {
+    // ✅ On garde cette déclaration (Côté Propriétaire)
+    #[ORM\ManyToMany(targetEntity: Intervenant::class, inversedBy: 'events')]
+    private Collection $intervenants;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -50,8 +54,6 @@ class Event
     #[ORM\Column(length: 255)]
     private ?string $location = null;
 
-    // ❌ L'ancienne relation participants a été supprimée ici
-
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $imageName = null;
 
@@ -70,8 +72,8 @@ class Event
     public function __construct()
     {
         $this->activities = new ArrayCollection();
-        // $this->participants supprimé
         $this->registrations = new ArrayCollection();
+        $this->intervenants = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -254,6 +256,33 @@ class Event
             if ($registration->getEvent() === $this) {
                 $registration->setEvent(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Intervenant>
+     */
+    public function getIntervenants(): Collection
+    {
+        return $this->intervenants;
+    }
+
+    public function addIntervenant(Intervenant $intervenant): static
+    {
+        if (!$this->intervenants->contains($intervenant)) {
+            $this->intervenants->add($intervenant);
+            $intervenant->addEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeIntervenant(Intervenant $intervenant): static
+    {
+        if ($this->intervenants->removeElement($intervenant)) {
+            $intervenant->removeEvent($this);
         }
 
         return $this;

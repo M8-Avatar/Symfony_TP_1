@@ -6,6 +6,8 @@ use App\Repository\EventRepository;
 use App\Repository\RegistrationRepository;
 use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Form\UserType;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -27,13 +29,17 @@ class UserController extends AbstractController
 
         $organizerData = [];
         
+        // Si l'utilisateur est Organisateur, on prépare les stats de son dashboard
         if ($this->isGranted('ROLE_ORGANIZER')) {
             $myCreatedEvents = $eventRepository->findBy(['organizer' => $user], ['startAt' => 'ASC']);
             
             $nextEvent = null;
             $now = new \DateTime();
             $upcomingActivities = [];
-            $uniqueParticipants = [];
+            
+            // 👇 CORRECTION ICI : On stocke des objets Intervenant
+            $uniqueIntervenants = []; 
+            
             $totalParticipants = 0;
             $totalActivities = 0;
 
@@ -42,16 +48,20 @@ class UserController extends AbstractController
                     $nextEvent = $event;
                 }
 
+                // 1. Récupération des VRAIS Intervenants (comme dans OrganizerController)
+                foreach ($event->getIntervenants() as $intervenant) {
+                    $uniqueIntervenants[$intervenant->getId()] = $intervenant;
+                }
+
                 $totalParticipants += count($event->getRegistrations());
 
                 foreach ($event->getActivities() as $activity) {
                     $totalActivities++;
+                    // On compte aussi les participants aux activités pour les stats
+                    $totalParticipants += count($activity->getParticipants());
                     
                     if ($activity->getStartAt() > $now) {
                         $upcomingActivities[] = $activity;
-                    }
-                    foreach ($activity->getParticipants() as $participant) {
-                        $uniqueParticipants[$participant->getId()] = $participant;
                     }
                 }
             }
@@ -62,12 +72,13 @@ class UserController extends AbstractController
                 'createdEvents' => $myCreatedEvents,
                 'nextEvent' => $nextEvent,
                 'upcomingActivities' => array_slice($upcomingActivities, 0, 5),
-                'intervenants' => array_slice($uniqueParticipants, 0, 6),
+                // On passe bien les objets Intervenant à la vue
+                'intervenants' => array_slice($uniqueIntervenants, 0, 6), 
                 'stats' => [
                     'totalEvents' => count($myCreatedEvents),
                     'totalActivities' => $totalActivities,
                     'totalParticipants' => $totalParticipants,
-                    'intervenants' => count($uniqueParticipants)
+                    'intervenants' => count($uniqueIntervenants)
                 ]
             ];
         }
@@ -80,18 +91,33 @@ class UserController extends AbstractController
     }
 
     #[Route('/me/edit', name: 'app_user_edit')]
-    public function edit(Request $request, EntityManagerInterface $entityManager): Response
+    public function edit(
+        Request $request, 
+        EntityManagerInterface $entityManager, 
+        UserPasswordHasherInterface $userPasswordHasher
+    ): Response
     {   
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
-        $profile = $user->getProfile();
-
-        $form = $this->createForm(ProfileType::class, $profile);
+        
+        $form = $this->createForm(UserType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            
+            $plainPassword = $form->get('plainPassword')->getData();
+            if ($plainPassword) {
+                $user->setPassword(
+                    $userPasswordHasher->hashPassword(
+                        $user,
+                        $plainPassword
+                    )
+                );
+            }
+
             $entityManager->flush();
-            $this->addFlash('success', 'Profil mis à jour avec succès !');
+            
+            $this->addFlash('success', 'Informations mises à jour avec succès !');
             return $this->redirectToRoute('app_user_profile');
         }
 

@@ -9,6 +9,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Vich\UploaderBundle\Form\Type\VichImageType;
 
 class ProfileType extends AbstractType
 {
@@ -37,7 +38,14 @@ class ProfileType extends AbstractType
                 ],
                 'attr' => ['class' => 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground']
             ])
-            // On pourra ajouter l'avatar upload plus tard si tu veux
+            ->add('imageFile', VichImageType::class, [
+                'label' => 'Avatar',
+                'required' => false,
+                'allow_delete' => true,
+                'download_uri' => false,
+                'image_uri' => true,
+                'attr' => ['class' => 'file-input']
+            ])
         ;
     }
 

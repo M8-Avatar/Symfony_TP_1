@@ -19,7 +19,12 @@ class HomeController extends AbstractController
         if ($query || $category) {
             $events = $eventRepository->findBySearch($query, $category);
         } else {
-            $events = $eventRepository->findBy([], ['startAt' => 'ASC']);
+            $events = $eventRepository->createQueryBuilder('e')
+                ->where('e.startAt > :now')
+                ->setParameter('now', new \DateTime())
+                ->orderBy('e.startAt', 'ASC')
+                ->getQuery()
+                ->getResult();
         }
 
         return $this->render('home/index.html.twig', [
@@ -28,6 +33,4 @@ class HomeController extends AbstractController
             'currentCategory' => $category
         ]);
     }
-
-    
 }

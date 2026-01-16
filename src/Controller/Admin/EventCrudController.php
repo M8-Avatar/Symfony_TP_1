@@ -26,8 +26,15 @@ class EventCrudController extends AbstractCrudController
             IdField::new('id')->hideOnForm(),
             TextField::new('title', 'Titre'),
             TextField::new('category', 'Catégorie'),
+
+            AssociationField::new('intervenants', 'Intervenants')
+            ->setFormTypeOption('by_reference', false)
+            ->autocomplete(),
+
+            IntegerField::new('capacity', 'Nombre de places total')
+                ->setHelp('Combien de personnes peuvent s\'inscrire ?')
+                ->setColumns(6),
             
-            // Pour l'image, on utilise le dossier d'upload qu'on a configuré avec Vich
             ImageField::new('imageName', 'Image')
                 ->setBasePath('/uploads/events')
                 ->setUploadDir('public/uploads/events')
@@ -40,6 +47,11 @@ class EventCrudController extends AbstractCrudController
             
             // Relation avec l'Organisateur (User)
             AssociationField::new('organizer', 'Organisateur'),
+
+            AssociationField::new('intervenants', 'Intervenants / Invités')
+                ->setHelp('Sélectionnez les invités spéciaux pour cet événement')
+                ->setFormTypeOption('by_reference', false)
+                ->autocomplete(),
         ];
     }
 }
